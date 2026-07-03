@@ -1,0 +1,8 @@
+{
+  "name": "realtime",
+  "displayName": "Realtime",
+  "version": "1.0.0",
+  "description": "Realtime patterns: WebSocket vs SSE vs push, socket auth, reconnection and pub/sub scaling",
+  "author": { "name": "Gaston Lara" },
+  "defaultEnabled": false
+}

@@ -1,0 +1,8 @@
+{
+  "name": "background-jobs",
+  "displayName": "Background Jobs",
+  "version": "1.0.0",
+  "description": "Queues, workers, retries, idempotent consumers, outbox pattern, cron and DLQs",
+  "author": { "name": "Gaston Lara" },
+  "defaultEnabled": false
+}

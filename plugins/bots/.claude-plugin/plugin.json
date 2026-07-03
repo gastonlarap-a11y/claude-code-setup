@@ -1,0 +1,8 @@
+{
+  "name": "bots",
+  "displayName": "Bots",
+  "version": "1.0.0",
+  "description": "Bot architecture for Telegram, Discord and WhatsApp: webhooks vs polling, command routing, conversation state and queues",
+  "author": { "name": "Gaston Lara" },
+  "defaultEnabled": false
+}

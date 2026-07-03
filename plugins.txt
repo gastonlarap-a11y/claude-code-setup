@@ -11,3 +11,8 @@ android-kotlin@gaston-plugins
 react-nextjs@gaston-plugins
 flutter@gaston-plugins
 react-native@gaston-plugins
+# Personal domain plugins (installed, enabled per project)
+api-design@gaston-plugins
+bots@gaston-plugins
+realtime@gaston-plugins
+background-jobs@gaston-plugins

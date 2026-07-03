@@ -72,7 +72,9 @@ if command -v claude >/dev/null 2>&1; then
   # re-enable them via their own .claude/settings.json.
   for p in expo@claude-plugins-official nestjs@gaston-plugins go@gaston-plugins \
            android-kotlin@gaston-plugins react-nextjs@gaston-plugins \
-           flutter@gaston-plugins react-native@gaston-plugins; do
+           flutter@gaston-plugins react-native@gaston-plugins \
+           api-design@gaston-plugins bots@gaston-plugins \
+           realtime@gaston-plugins background-jobs@gaston-plugins; do
     claude plugin disable "$p" --scope user >/dev/null 2>&1 || true
   done
   echo "  stack plugins installed globally, disabled by default (enable per project)"

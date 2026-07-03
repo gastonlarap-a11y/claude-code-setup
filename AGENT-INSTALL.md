@@ -32,17 +32,20 @@ This does, idempotently:
 4. Registers this repo as the `gaston-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
 5. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 6 stack
-   plugins), then force-disables the stack plugins and expo at user scope. LSP plugins
-   stay globally enabled via `global/settings.json`.
+   plugins + the 4 domain plugins: api-design, bots, realtime, background-jobs), then
+   force-disables everything except the LSPs at user scope. LSP plugins stay globally
+   enabled via `global/settings.json`.
 
 If `install.sh` fails at any step, perform that step manually (the script is short — read it).
 
 ## 3. Verify
 - `claude mcp list` shows `context7` connected.
 - `claude plugin marketplace list` shows `gaston-plugins`.
-- `claude plugin list` shows the 3 LSP plugins **enabled**, and `expo` + the 6 stack
-  plugins (`nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`)
-  **installed but disabled**.
+- `claude plugin list` shows the 3 LSP plugins **enabled**, and `expo` + the 10 personal
+  plugins (`nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`,
+  `api-design`, `bots`, `realtime`, `background-jobs`) **installed but disabled**.
+- `/research <question>` works in a session (runs in the `docs-researcher` subagent and
+  returns version + snippet + source).
 - Start a session in `$HOME` and run `/context`: the global `CLAUDE.md` must be loaded and
   NO stack-plugin skills must appear (they are per-project).
 - The statusline shows model, directory and a context-usage bar.

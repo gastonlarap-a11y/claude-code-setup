@@ -1,7 +1,7 @@
 {
   "name": "android-kotlin",
   "displayName": "Android Kotlin Stack",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Android Kotlin/Compose architecture, testing and Gradle conventions",
   "author": { "name": "Gaston Lara" },
   "defaultEnabled": false
