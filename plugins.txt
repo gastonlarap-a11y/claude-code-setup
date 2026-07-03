@@ -16,3 +16,4 @@ api-design@gaston-plugins
 bots@gaston-plugins
 realtime@gaston-plugins
 background-jobs@gaston-plugins
+ux@gaston-plugins

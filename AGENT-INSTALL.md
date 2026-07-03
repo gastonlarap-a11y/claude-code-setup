@@ -8,7 +8,10 @@ directory. Follow these steps in order. Do not skip verification.
   (needed for `defaultEnabled: false` in marketplaces; older versions are handled by a
   fallback in `install.sh` but should be upgraded). If missing, install it
   (`npm install -g @anthropic-ai/claude-code`) and ask the user to log in (`claude` → follow auth).
-- Confirm `jq` is installed (`brew install jq`) — the statusline degrades without it.
+- Confirm `jq` is installed — the statusline degrades without it. Install: `brew install jq`
+  (macOS) / `winget install --id jqlang.jq -e` (Windows) / `sudo apt install jq` (Linux).
+- Confirm some Python is available (`python3`, `python` or `py` — any ≥3.8): `install.sh`
+  and the hooks use it as the JSON fallback when `jq` is missing.
 - Confirm `secrets.env` exists here. If not, copy `secrets.env.example` to `secrets.env`
   and ask the user for the real values before continuing.
 - Dart SDK ≥ 3.9 is only needed inside Flutter projects (for the bundled Dart MCP/LSP);
@@ -40,7 +43,7 @@ This does, idempotently:
 4. Registers this repo as the `gaston-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
 5. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 6 stack
-   plugins + the 4 domain plugins: api-design, bots, realtime, background-jobs), then
+   plugins + the 5 domain plugins: api-design, bots, realtime, background-jobs, ux), then
    force-disables everything except the LSPs at user scope. LSP plugins stay globally
    enabled via `global/settings.json`.
 
@@ -49,9 +52,9 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
 ## 3. Verify
 - `claude mcp list` shows `context7` connected.
 - `claude plugin marketplace list` shows `gaston-plugins`.
-- `claude plugin list` shows the 3 LSP plugins **enabled**, and `expo` + the 10 personal
+- `claude plugin list` shows the 3 LSP plugins **enabled**, and `expo` + the 11 personal
   plugins (`nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`,
-  `api-design`, `bots`, `realtime`, `background-jobs`) **installed but disabled**.
+  `api-design`, `bots`, `realtime`, `background-jobs`, `ux`) **installed but disabled**.
 - `/research <question>` works in a session (runs in the `docs-researcher` subagent and
   returns version + snippet + source).
 - `/setup-project` is listed in the `/` menu (global skill that creates/audits per-project

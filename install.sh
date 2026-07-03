@@ -24,13 +24,16 @@ chmod +x "$DEST/hooks/"*.sh "$DEST/statusline.sh"
 find "$DEST/skills" "$DEST/agents" "$DEST/hooks" "$DEST/rules" -name ".DS_Store" -delete 2>/dev/null || true
 
 command -v jq >/dev/null 2>&1 \
-  || echo "  WARNING: jq not found (brew install jq) — statusline will be minimal."
+  || echo "  WARNING: jq not found — statusline will be minimal. Install: brew install jq (macOS) / winget install jqlang.jq (Windows) / sudo apt install jq (Linux)."
+
+# Any Python works for the JSON merges below; python3 is not a given on Windows/Git Bash.
+PY="$(command -v python3 || command -v python || command -v py || true)"
 
 # --- Secrets -> ~/.claude/settings.local.json (env block, machine-local) ----
-if [ -f "$SRC/secrets.env" ]; then
+if [ -f "$SRC/secrets.env" ] && [ -n "$PY" ]; then
   # shellcheck disable=SC1091
   source "$SRC/secrets.env"
-  python3 - "$DEST/settings.local.json" <<'PYEOF'
+  "$PY" - "$DEST/settings.local.json" <<'PYEOF'
 import json, os, sys
 path = sys.argv[1]
 data = {}
@@ -47,16 +50,27 @@ with open(path, "w") as f:
     json.dump(data, f, indent=2)
 print("  settings.local.json: secrets applied")
 PYEOF
-else
+elif [ ! -f "$SRC/secrets.env" ]; then
   echo "  WARNING: secrets.env not found — copy secrets.env.example to secrets.env and re-run."
+else
+  echo "  WARNING: no python found — add the keys from secrets.env to the \"env\" block of $DEST/settings.local.json manually."
 fi
 
 # --- MCP servers (user scope) + plugins --------------------------------------
 if command -v claude >/dev/null 2>&1; then
-  ctx7_json="$(python3 -c "import json;d=json.load(open('$SRC/global/mcp-servers.json'));print(json.dumps(d['mcpServers']['context7']))")"
-  claude mcp add-json context7 "$ctx7_json" --scope user 2>/dev/null \
-    && echo "  MCP: context7 registered (user scope)" \
-    || echo "  MCP: context7 already exists or CLI refused — check with 'claude mcp list'"
+  if command -v jq >/dev/null 2>&1; then
+    ctx7_json="$(jq -c '.mcpServers.context7' "$SRC/global/mcp-servers.json")"
+  elif [ -n "$PY" ]; then
+    ctx7_json="$("$PY" -c "import json;d=json.load(open('$SRC/global/mcp-servers.json'));print(json.dumps(d['mcpServers']['context7']))")"
+  else
+    ctx7_json=""
+    echo "  WARNING: neither jq nor python found — register context7 manually: claude mcp add-json context7 '<json from global/mcp-servers.json>' --scope user"
+  fi
+  if [ -n "$ctx7_json" ]; then
+    claude mcp add-json context7 "$ctx7_json" --scope user 2>/dev/null \
+      && echo "  MCP: context7 registered (user scope)" \
+      || echo "  MCP: context7 already exists or CLI refused — check with 'claude mcp list'"
+  fi
 
   # Personal marketplace (this repo) — register or refresh, idempotent.
   claude plugin marketplace add "$SRC" 2>/dev/null \
@@ -79,7 +93,8 @@ if command -v claude >/dev/null 2>&1; then
            android-kotlin@gaston-plugins react-nextjs@gaston-plugins \
            flutter@gaston-plugins react-native@gaston-plugins \
            api-design@gaston-plugins bots@gaston-plugins \
-           realtime@gaston-plugins background-jobs@gaston-plugins; do
+           realtime@gaston-plugins background-jobs@gaston-plugins \
+           ux@gaston-plugins; do
     claude plugin disable "$p" --scope user >/dev/null 2>&1 || true
   done
   echo "  stack plugins installed globally, disabled by default (enable per project)"

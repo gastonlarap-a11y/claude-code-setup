@@ -85,6 +85,14 @@
       "version": "1.0.0",
       "defaultEnabled": false,
       "category": "domain"
+    },
+    {
+      "name": "ux",
+      "source": "./plugins/ux",
+      "description": "Cross-platform UX: screen states, perceived performance, accessibility minimums and platform conventions (web, Android, Flutter/RN)",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "domain"
     }
   ]
 }

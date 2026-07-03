@@ -5,7 +5,16 @@
 set -uo pipefail
 
 input="$(cat)"
-file="$(printf '%s' "$input" | python3 -c "import json,sys; print(json.load(sys.stdin).get('tool_input',{}).get('file_path',''))" 2>/dev/null || true)"
+# JSON parsing: jq first (documented precondition), else any Python (python3 is not a
+# given on Windows/Git Bash), else tolerant no-op.
+PY="$(command -v python3 || command -v python || command -v py || true)"
+if command -v jq >/dev/null 2>&1; then
+  file="$(printf '%s' "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)"
+elif [ -n "$PY" ]; then
+  file="$(printf '%s' "$input" | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('tool_input',{}).get('file_path',''))" 2>/dev/null || true)"
+else
+  file=""
+fi
 
 if [ -z "$file" ] || [ ! -f "$file" ]; then
   echo '{}'

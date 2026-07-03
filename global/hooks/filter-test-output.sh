@@ -5,7 +5,16 @@
 set -uo pipefail
 
 input="$(cat)"
-cmd="$(printf '%s' "$input" | python3 -c "import json,sys; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" 2>/dev/null || true)"
+# JSON parsing: jq first (documented precondition), else any Python (python3 is not a
+# given on Windows/Git Bash), else tolerant no-op (command runs unfiltered).
+PY="$(command -v python3 || command -v python || command -v py || true)"
+if command -v jq >/dev/null 2>&1; then
+  cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null || true)"
+elif [ -n "$PY" ]; then
+  cmd="$(printf '%s' "$input" | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" 2>/dev/null || true)"
+else
+  cmd=""
+fi
 
 case "$cmd" in
   "npm test"*|"npm run test"*|"pnpm test"*|"pnpm run test"*|"go test"*|"flutter test"*|"npx jest"*|"./gradlew test"*)
@@ -14,7 +23,10 @@ case "$cmd" in
       echo '{}'
       exit 0
     fi
-    printf '%s' "$cmd" | python3 -c '
+    if command -v jq >/dev/null 2>&1; then
+      printf '%s' "$cmd" | jq -Rs '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: {command: ("bash \"$HOME/.claude/hooks/run-test-filtered.sh\" " + (. | @sh))}}}'
+    elif [ -n "$PY" ]; then
+      printf '%s' "$cmd" | "$PY" -c '
 import json, shlex, sys
 cmd = sys.stdin.read()
 wrapper = "bash \"$HOME/.claude/hooks/run-test-filtered.sh\" " + shlex.quote(cmd)
@@ -26,6 +38,9 @@ print(json.dumps({
     }
 }))
 '
+    else
+      echo '{}'
+    fi
     ;;
   *)
     echo '{}'

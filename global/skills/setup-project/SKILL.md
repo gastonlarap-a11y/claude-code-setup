@@ -93,7 +93,8 @@ one. Skeletons for every block: `references/templates.md` (read it before writin
 Plugin mapping when `gaston-plugins` is registered: NestJS → `nestjs` + `api-design` ·
 Go service → `go` · Android → `android-kotlin` · Next.js → `react-nextjs` · Flutter →
 `flutter` · React Native → `react-native` + `expo@claude-plugins-official` · add `bots` /
-`realtime` / `background-jobs` per domain. Also suggest the official code-intelligence (LSP)
+`realtime` / `background-jobs` per domain · any project with a user-facing UI (web or
+mobile, any framework) → `ux`. Also suggest the official code-intelligence (LSP)
 plugin for the project's language if not already enabled.
 
 Stack without a matching plugin, or no marketplace available: encode the equivalent
