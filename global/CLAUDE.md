@@ -16,7 +16,8 @@ Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android
 
 ## Workflow rules
 - Before writing code against a third-party library, check current docs via the `context7` MCP tools — do not trust training data for API surfaces or latest versions.
-- Prefer the `gh` CLI for simple GitHub operations (view/list/status); use the GitHub MCP only for complex multi-step operations.
+- Research and doc lookups: always in English, preferring the latest stable release and official sources (docs, changelogs, release notes). Never assume versions from memory.
+- VCS via CLI: use `gh` for GitHub remotes and `az repos` / `az devops` for Azure DevOps remotes (detect from `git remote -v`). If the required CLI is missing, install it or give me the exact install steps and pause until I confirm.
 - Prefer editing existing files over creating new ones. No README/docs files unless asked.
 - For Docker/Kubernetes, CI/CD, database, or architecture-decision tasks, consult the matching global skill (`docker-kubernetes`, `ci-cd`, `databases`, `architecture`).
 

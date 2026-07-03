@@ -1,3 +1,13 @@
+# LSP plugins (globally enabled via global/settings.json)
 typescript-lsp@claude-plugins-official
 gopls-lsp@claude-plugins-official
 kotlin-lsp@claude-plugins-official
+# Official extras (installed, enabled per project)
+expo@claude-plugins-official
+# Personal stack plugins (installed, enabled per project)
+nestjs@gaston-plugins
+go@gaston-plugins
+android-kotlin@gaston-plugins
+react-nextjs@gaston-plugins
+flutter@gaston-plugins
+react-native@gaston-plugins

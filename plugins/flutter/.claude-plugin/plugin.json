@@ -1,0 +1,8 @@
+{
+  "name": "flutter",
+  "displayName": "Flutter Stack",
+  "version": "1.0.0",
+  "description": "Flutter/Dart conventions plus official Dart MCP server and Dart LSP",
+  "author": { "name": "Gaston Lara" },
+  "defaultEnabled": false
+}

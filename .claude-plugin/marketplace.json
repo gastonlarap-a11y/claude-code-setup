@@ -1,0 +1,58 @@
+{
+  "name": "gaston-plugins",
+  "owner": {
+    "name": "Gaston Lara",
+    "email": "gaston.lara.p@gmail.com"
+  },
+  "description": "Personal per-stack plugins: conventions, testing and tooling for my main stacks",
+  "plugins": [
+    {
+      "name": "nestjs",
+      "source": "./plugins/nestjs",
+      "description": "NestJS (Fastify) architecture, testing and API conventions",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "stack"
+    },
+    {
+      "name": "go",
+      "source": "./plugins/go",
+      "description": "Go project layout, error handling, testing and tooling conventions",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "stack"
+    },
+    {
+      "name": "android-kotlin",
+      "source": "./plugins/android-kotlin",
+      "description": "Android Kotlin/Compose architecture, testing and Gradle conventions",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "stack"
+    },
+    {
+      "name": "react-nextjs",
+      "source": "./plugins/react-nextjs",
+      "description": "React/Next.js App Router architecture, testing and UI conventions",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "stack"
+    },
+    {
+      "name": "flutter",
+      "source": "./plugins/flutter",
+      "description": "Flutter/Dart conventions plus official Dart MCP server and Dart LSP",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "stack"
+    },
+    {
+      "name": "react-native",
+      "source": "./plugins/react-native",
+      "description": "React Native + Expo conventions (pair with the official expo plugin)",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "stack"
+    }
+  ]
+}

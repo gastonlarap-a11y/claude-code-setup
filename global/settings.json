@@ -50,10 +50,24 @@
       "Bash(rm -rf:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
-      "Bash(kubectl delete:*)"
+      "Bash(kubectl delete:*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/secrets.env)",
+      "Read(**/*.pem)",
+      "Read(**/id_rsa*)",
+      "Read(~/.ssh/**)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(**/secrets.env)"
     ]
   },
   "model": "claude-fable-5[1m]",
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "padding": 0
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -81,7 +95,14 @@
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,
-    "kotlin-lsp@claude-plugins-official": true
+    "kotlin-lsp@claude-plugins-official": true,
+    "expo@claude-plugins-official": false,
+    "nestjs@gaston-plugins": false,
+    "go@gaston-plugins": false,
+    "android-kotlin@gaston-plugins": false,
+    "react-nextjs@gaston-plugins": false,
+    "flutter@gaston-plugins": false,
+    "react-native@gaston-plugins": false
   },
   "effortLevel": "high",
   "theme": "dark"
