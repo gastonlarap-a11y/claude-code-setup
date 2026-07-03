@@ -2,6 +2,7 @@
 typescript-lsp@claude-plugins-official
 gopls-lsp@claude-plugins-official
 kotlin-lsp@claude-plugins-official
+csharp-lsp@claude-plugins-official
 # Official extras (installed, enabled per project)
 expo@claude-plugins-official
 # Personal stack plugins (installed, enabled per project)
@@ -11,6 +12,7 @@ android-kotlin@gaston-plugins
 react-nextjs@gaston-plugins
 flutter@gaston-plugins
 react-native@gaston-plugins
+dotnet@gaston-plugins
 # Personal domain plugins (installed, enabled per project)
 api-design@gaston-plugins
 bots@gaston-plugins

@@ -1,0 +1,8 @@
+{
+  "name": "dotnet",
+  "displayName": ".NET",
+  "version": "1.0.0",
+  "description": "C#/.NET enterprise stack: ASP.NET Core architecture, EF Core + SQL Server, xUnit/Testcontainers testing and Azure deployment with full local emulation",
+  "author": { "name": "Gaston Lara" },
+  "defaultEnabled": false
+}

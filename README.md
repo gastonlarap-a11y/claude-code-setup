@@ -36,8 +36,8 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) |
 | `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (haiku): investiga docs en contexto aislado |
 | `global/mcp-servers.json` | Definición MCP | context7 (docs de librerías), key vía `secrets.env` |
-| `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 11 plugins con `defaultEnabled: false` |
-| `plugins/` (stack) | `nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native` | Convenciones de arquitectura/testing/tooling por stack; flutter trae MCP oficial de Dart + LSP de Dart; los móviles traen `recipes` (cámara, permisos, notificaciones, deep links, modales) |
+| `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 12 plugins con `defaultEnabled: false` |
+| `plugins/` (stack) | `nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`, `dotnet` | Convenciones de arquitectura/testing/tooling por stack; flutter trae MCP oficial de Dart + LSP de Dart; los móviles traen `recipes`; dotnet trae EF Core + SQL Server local (OrbStack), Aspire, Azure y ruta de aprendizaje |
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil) — con `references/` que cargan solo si hacen falta |
 | `plugins.txt` / `install.sh` | Instalador | Idempotente: copia config, registra marketplace, instala plugins |
 | `secrets.env(.example)` | Keys reales (gitignored) / plantilla | `install.sh` las inyecta en `~/.claude/settings.local.json` |
@@ -124,6 +124,7 @@ Mapeo de plugins que aplica el protocolo (referencia, por si lo haces a mano):
 | Web Next.js | `react-nextjs` + `ux` |
 | App Flutter | `flutter` + `ux` (+ `realtime` para push) |
 | App React Native | `react-native` + `expo@claude-plugins-official` + `ux` |
+| API/Servicio .NET (C#) | `dotnet` + `api-design` (+ `background-jobs` si hay colas) |
 | Bot (cualquier stack) | stack + `bots` (+ `background-jobs`) |
 | Stack sin plugin (Python, Rust, …) | rules/skills locales generados por el protocolo (auto-suficientes) |
 
@@ -215,7 +216,7 @@ Destilado de [best-practices](https://code.claude.com/docs/en/best-practices) y
 ```bash
 claude mcp list                      # context7 conectado
 claude plugin marketplace list      # gaston-plugins
-claude plugin list                   # 3 LSP enabled; 11 stack/dominio + expo disabled
+claude plugin list                   # 4 LSP enabled; 12 stack/dominio + expo disabled
 ```
 
 En una sesión nueva: statusline visible con % de contexto · `/context` sin skills de stack

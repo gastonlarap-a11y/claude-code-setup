@@ -47,6 +47,14 @@
       "category": "stack"
     },
     {
+      "name": "dotnet",
+      "source": "./plugins/dotnet",
+      "description": "C#/.NET enterprise stack: ASP.NET Core, EF Core + SQL Server, xUnit/Testcontainers and Azure with local emulation",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "stack"
+    },
+    {
       "name": "react-native",
       "source": "./plugins/react-native",
       "description": "React Native + Expo conventions (pair with the official expo plugin)",

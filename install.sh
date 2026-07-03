@@ -92,6 +92,7 @@ if command -v claude >/dev/null 2>&1; then
   for p in expo@claude-plugins-official nestjs@gaston-plugins go@gaston-plugins \
            android-kotlin@gaston-plugins react-nextjs@gaston-plugins \
            flutter@gaston-plugins react-native@gaston-plugins \
+           dotnet@gaston-plugins \
            api-design@gaston-plugins bots@gaston-plugins \
            realtime@gaston-plugins background-jobs@gaston-plugins \
            ux@gaston-plugins; do

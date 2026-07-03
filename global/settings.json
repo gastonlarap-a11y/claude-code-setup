@@ -106,6 +106,7 @@
     "typescript-lsp@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,
     "kotlin-lsp@claude-plugins-official": true,
+    "csharp-lsp@claude-plugins-official": true,
     "expo@claude-plugins-official": false,
     "nestjs@gaston-plugins": false,
     "go@gaston-plugins": false,
@@ -116,7 +117,9 @@
     "api-design@gaston-plugins": false,
     "bots@gaston-plugins": false,
     "realtime@gaston-plugins": false,
-    "background-jobs@gaston-plugins": false
+    "background-jobs@gaston-plugins": false,
+    "ux@gaston-plugins": false,
+    "dotnet@gaston-plugins": false
   },
   "effortLevel": "high",
   "theme": "dark"

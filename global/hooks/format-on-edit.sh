@@ -52,6 +52,13 @@ case "$file" in
   *.kt|*.kts)
     command -v ktlint >/dev/null 2>&1 && ktlint -F "$file" >/dev/null 2>&1 || true
     ;;
+  *.cs)
+    if command -v csharpier >/dev/null 2>&1; then
+      csharpier format "$file" >/dev/null 2>&1 || true
+    elif command -v dotnet >/dev/null 2>&1; then
+      dotnet csharpier format "$file" >/dev/null 2>&1 || true
+    fi
+    ;;
 esac
 
 echo '{}'

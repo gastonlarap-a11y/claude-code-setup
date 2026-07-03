@@ -42,7 +42,7 @@ This does, idempotently:
    references `${CONTEXT7_API_KEY}` — resolved from the env block above.
 4. Registers this repo as the `gaston-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
-5. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 6 stack
+5. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 7 stack
    plugins + the 5 domain plugins: api-design, bots, realtime, background-jobs, ux), then
    force-disables everything except the LSPs at user scope. LSP plugins stay globally
    enabled via `global/settings.json`.
@@ -52,9 +52,10 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
 ## 3. Verify
 - `claude mcp list` shows `context7` connected.
 - `claude plugin marketplace list` shows `gaston-plugins`.
-- `claude plugin list` shows the 3 LSP plugins **enabled**, and `expo` + the 11 personal
+- `claude plugin list` shows the 4 LSP plugins **enabled**, and `expo` + the 12 personal
   plugins (`nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`,
-  `api-design`, `bots`, `realtime`, `background-jobs`, `ux`) **installed but disabled**.
+  `dotnet`, `api-design`, `bots`, `realtime`, `background-jobs`, `ux`) **installed but
+  disabled**.
 - `/research <question>` works in a session (runs in the `docs-researcher` subagent and
   returns version + snippet + source).
 - `/setup-project` is listed in the `/` menu (global skill that creates/audits per-project
