@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 # Restores the Claude Code global configuration from this directory.
 # Safe to re-run: it overwrites ~/.claude config files with the versions here.
+# OWNER-ONLY: this replaces ~/.claude (CLAUDE.md, settings, hooks, statusline) with the
+# owner's personal setup. To configure a single project or use only the plugins, do NOT
+# run this — see AGENT-PROJECT-SETUP.md instead.
 set -euo pipefail
 
 SRC="$(cd "$(dirname "$0")" && pwd)"
 DEST="${CLAUDE_HOME:-$HOME/.claude}"
 
 echo "Restoring Claude Code config: $SRC -> $DEST"
+echo "  (owner-only: overwrites the global config; project setup lives in AGENT-PROJECT-SETUP.md)"
 mkdir -p "$DEST"
 
 cp "$SRC/global/CLAUDE.md" "$DEST/CLAUDE.md"
@@ -17,6 +21,7 @@ cp -R "$SRC/global/hooks" "$DEST/"
 cp -R "$SRC/global/rules" "$DEST/"
 cp "$SRC/global/statusline.sh" "$DEST/statusline.sh"
 chmod +x "$DEST/hooks/"*.sh "$DEST/statusline.sh"
+find "$DEST/skills" "$DEST/agents" "$DEST/hooks" "$DEST/rules" -name ".DS_Store" -delete 2>/dev/null || true
 
 command -v jq >/dev/null 2>&1 \
   || echo "  WARNING: jq not found (brew install jq) — statusline will be minimal."
@@ -85,3 +90,4 @@ else
 fi
 
 echo "Done. Open a NEW Claude Code session to load everything (check with /context, /mcp, /plugin)."
+echo "Per project: run /setup-project inside each repo (new or legacy) to generate/audit its local config."

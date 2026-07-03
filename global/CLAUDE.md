@@ -11,6 +11,7 @@ Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android
 - Design for scale and for other readers: clear module boundaries, self-documenting names, small focused functions. Someone else must understand this code without me.
 - Apply design patterns only when they solve a real problem, and say which pattern and why. No over-engineering, no speculative abstractions.
 - Every feature ships with its tests. Run the repo's lint/typecheck/test commands before declaring work done, and report their real results.
+- Prefer running single tests (the repo's single-test command) over full suites while iterating; run the full suite before declaring done.
 - Respect each repo's existing architecture (its `CLAUDE.md` / `ARCHITECTURE.md`); never introduce a competing style.
 - Handle errors explicitly at boundaries; never swallow exceptions or ignore returned errors.
 
@@ -21,6 +22,7 @@ Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android
 - VCS via CLI: use `gh` for GitHub remotes and `az repos` / `az devops` for Azure DevOps remotes (detect from `git remote -v`). If the required CLI is missing, install it or give me the exact install steps and pause until I confirm.
 - Prefer editing existing files over creating new ones. No README/docs files unless asked.
 - For Docker/Kubernetes, CI/CD, database, or architecture-decision tasks, consult the matching global skill (`docker-kubernetes`, `ci-cd`, `databases`, `architecture`).
+- If the project has no `CLAUDE.md`/`.claude/` config, or its config has drifted (a documented command fails, a stated convention contradicts the code), offer `/setup-project` — it creates/audits/improves project config without discarding what exists.
 
 ## Git conventions
 - **Authorship rule (absolute): commits, PRs, MRs, issues and their descriptions carry ONLY my identity — no `Co-Authored-By` trailers, no "Generated with" footers, no AI attribution of any kind, anywhere.**

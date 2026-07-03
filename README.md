@@ -3,7 +3,9 @@
 Respaldo versionado y **marketplace de plugins** (`gaston-plugins`) de mi configuración
 global de Claude Code. Objetivo: que cualquier sesión tenga el máximo contexto real con el
 mínimo de tokens — conocimiento por stack/dominio que solo carga cuando se usa,
-investigación automática de docs oficiales, y guardrails deterministas.
+investigación automática de docs oficiales, guardrails deterministas, y un protocolo
+(`/setup-project`) que configura o mejora CUALQUIER proyecto (nuevo, legacy sin config, o
+con config existente que se preserva y afina) dejándolo auto-mejorable.
 
 > **Regla de autoría (absoluta):** commits, PRs, MRs e issues llevan SOLO mi identidad.
 > Nunca `Co-Authored-By`, nunca "Generated with", ninguna mención a IA. Definida en
@@ -14,11 +16,13 @@ investigación automática de docs oficiales, y guardrails deterministas.
 1. [Qué contiene](#qué-contiene)
 2. [Cómo funciona (el modelo de eficiencia)](#cómo-funciona)
 3. [Paso a paso: restaurar una máquina nueva](#restaurar-una-máquina-nueva)
-4. [Paso a paso: empezar un proyecto](#empezar-un-proyecto)
-5. [Paso a paso: resolver "cómo hago X"](#resolver-cómo-hago-x)
-6. [Paso a paso: editar y publicar un plugin](#editar-y-publicar-un-plugin)
-7. [Paso a paso: mantener el conocimiento al día](#mantener-el-conocimiento-al-día)
-8. [Verificación rápida](#verificación-rápida)
+4. [Paso a paso: configurar un proyecto (nuevo o existente)](#configurar-un-proyecto-nuevo-o-existente)
+5. [Paso a paso: compartir este directorio con otra persona](#compartir-este-directorio-con-otra-persona)
+6. [Paso a paso: resolver "cómo hago X"](#resolver-cómo-hago-x)
+7. [Paso a paso: editar y publicar un plugin](#editar-y-publicar-un-plugin)
+8. [Paso a paso: mantener el conocimiento al día](#mantener-el-conocimiento-al-día)
+9. [Rendimiento: consejos oficiales](#rendimiento-consejos-oficiales)
+10. [Verificación rápida](#verificación-rápida)
 
 ## Qué contiene
 
@@ -29,7 +33,7 @@ investigación automática de docs oficiales, y guardrails deterministas.
 | `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart: cargan SOLO al tocar archivos de ese lenguaje |
 | `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro) |
 | `global/statusline.sh` | Statusline → `~/.claude/statusline.sh` | Barra con % de contexto usado y % del límite 5h (necesita `jq`) |
-| `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación) y **`refresh-knowledge`** (automejora) |
+| `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) |
 | `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (haiku): investiga docs en contexto aislado |
 | `global/mcp-servers.json` | Definición MCP | context7 (docs de librerías), key vía `secrets.env` |
 | `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 10 plugins con `defaultEnabled: false` |
@@ -37,7 +41,9 @@ investigación automática de docs oficiales, y guardrails deterministas.
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron) — con `references/` que cargan solo si hacen falta |
 | `plugins.txt` / `install.sh` | Instalador | Idempotente: copia config, registra marketplace, instala plugins |
 | `secrets.env(.example)` | Keys reales (gitignored) / plantilla | `install.sh` las inyecta en `~/.claude/settings.local.json` |
-| `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración automatizada + verificación |
+| `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración de MI máquina (sobreescribe `~/.claude/`) + verificación |
+| `AGENT-PROJECT-SETUP.md` | Guía en inglés para agentes | Configurar el proyecto de CUALQUIER persona usando este directorio, sin tocar su config global |
+| `CLAUDE.md` (raíz) | Contexto de este repo | Orienta a cualquier agente abierto aquí: entradas, reglas de edición y versionado de plugins |
 
 ## Cómo funciona
 
@@ -70,14 +76,33 @@ bash install.sh                            # 4. restaura todo
 
 Luego abre una sesión nueva y pasa la [verificación rápida](#verificación-rápida).
 
-## Empezar un proyecto
+## Configurar un proyecto (nuevo o existente)
 
-1. Crea el repo desde tu template (`~/Documents/Git/template-*`) o desde cero.
-2. Habilita los plugins del proyecto en su `.claude/settings.json` (commitéalo):
+Un solo comando para los tres casos — abre Claude Code en el repo y corre:
 
-```json
-{ "enabledPlugins": { "nestjs@gaston-plugins": true, "api-design@gaston-plugins": true } }
 ```
+/setup-project
+```
+
+| Caso | Qué hace el protocolo |
+|---|---|
+| **Proyecto nuevo** (recién inicializado) | Detecta el stack elegido, pregunta lo ambiguo (template, arquitectura objetivo), habilita los plugins que correspondan y genera `CLAUDE.md` + `.claude/` mínimos que fijan la arquitectura desde la primera sesión |
+| **Proyecto existente sin config de IA** | Deriva las convenciones DEL código real (módulos recientes, comandos verificados corriéndolos, CI) y las codifica en config token-lean adaptada a ese repo — nunca impone estilo ajeno |
+| **Proyecto con config de IA previa** (CLAUDE.md, AGENTS.md, .cursorrules, .claude/…) | Audita: mantiene lo que sirve, afina lo impreciso, mueve lo mal ubicado (procedimientos → skills, estilo por lenguaje → rules con `paths:`, garantías → permisos/hooks) y muestra TODO cambio antes de aplicarlo — jamás descarta en silencio |
+
+Reglas del protocolo (completo en `global/skills/setup-project/SKILL.md`): nada se escribe
+sin aprobar la propuesta; todo comando documentado fue ejecutado; presupuestos de contexto
+(`CLAUDE.md` raíz ≤ ~60 líneas); y deja un bloque de **auto-mantenimiento** en el
+`CLAUDE.md` del proyecto: si un comando documentado falla, una convención contradice el
+código o corriges lo mismo dos veces, el agente propone el fix de config en esa misma
+sesión. Re-correr `/setup-project` sobre un proyecto ya configurado = re-auditoría (solo
+propone el delta).
+
+**Costo real**: la config siempre-cargada queda mínima (decenas de líneas); el conocimiento
+pesado vive en plugins/skills/rules que cargan solo al usarse. El ahorro (cero vueltas en
+falso, cero re-explicaciones, docs solo en subagente) supera el costo fijo por sesión.
+
+Mapeo de plugins que aplica el protocolo (referencia, por si lo haces a mano):
 
 | Tipo de proyecto | Habilita |
 |---|---|
@@ -88,10 +113,30 @@ Luego abre una sesión nueva y pasa la [verificación rápida](#verificación-r�
 | App Flutter | `flutter` (+ `realtime` para push) |
 | App React Native | `react-native` + `expo@claude-plugins-official` |
 | Bot (cualquier stack) | stack + `bots` (+ `background-jobs`) |
+| Stack sin plugin (Python, Rust, …) | rules/skills locales generados por el protocolo (auto-suficientes) |
 
-Alternativa CLI: `claude plugin enable <name>@gaston-plugins --scope project`.
+Manual: `.claude/settings.json` con `{ "enabledPlugins": { "nestjs@gaston-plugins": true } }`
+o `claude plugin enable <name>@gaston-plugins --scope project`. Verifica con `/context`:
+deben aparecer las skills del plugin habilitado y nada más.
 
-3. Abre la sesión: `/context` debe mostrar las skills del plugin habilitado y nada más.
+## Compartir este directorio con otra persona
+
+Para que alguien (cualquier stack, con o sin config previa en su proyecto) aproveche esto
+sin heredar mi configuración personal:
+
+1. Pásale el directorio (o el repo git).
+2. En SU proyecto, abre Claude Code y le dice al agente:
+
+   > Lee `<ruta-al-directorio>/AGENT-PROJECT-SETUP.md` y configura este proyecto.
+
+3. El agente ejecuta el protocolo `setup-project`: detecta stack, preserva/mejora la config
+   que el proyecto ya tenga, y opcionalmente registra el marketplace
+   (`claude plugin marketplace add <ruta>`) para habilitar los plugins del stack.
+
+Importante: **`install.sh` es solo para mis máquinas** — sobreescribe `~/.claude/` con mi
+config personal (idioma, autoría, statusline). `AGENT-PROJECT-SETUP.md` lo advierte y los
+agentes no deben sugerirlo a terceros. Las preferencias personales de cada quien van en su
+propio `~/.claude/CLAUDE.md`, nunca en los archivos compartidos del proyecto.
 
 ## Resolver "cómo hago X"
 
@@ -129,6 +174,30 @@ git add -A && git commit -m "chore: sync claude config"
 - Los plugins se editan SIEMPRE aquí (en `plugins/`), nunca en `~/.claude`.
 - Plugins oficiales opcionales (no instalados): `playwright@claude-plugins-official` (e2e navegador), `code-review@claude-plugins-official`.
 
+## Rendimiento: consejos oficiales
+
+El contexto es el recurso #1: el rendimiento del modelo degrada a medida que se llena.
+Destilado de [best-practices](https://code.claude.com/docs/en/best-practices) y
+[costs](https://code.claude.com/docs/en/costs) (verificado 2026-07):
+
+- **`/clear` entre tareas no relacionadas** — la "sesión cajón de sastre" es el anti-patrón
+  #1. Tras 2 correcciones fallidas sobre lo mismo: `/clear` y un prompt mejor con lo aprendido.
+- **Da siempre una verificación ejecutable** (test, build, screenshot a comparar): Claude
+  itera contra el check en vez de "parecer listo". Pide evidencia (output real), no afirmaciones.
+- **Plan mode solo para lo complejo/incierto**; si el diff cabe en una frase, directo.
+- **Subagentes para investigar** ("usa un subagente para investigar X"): la exploración se
+  queda en otro contexto y solo vuelve el resumen. También como revisor adversarial del diff.
+- **Prompts específicos**: archivos concretos (`@ruta`), criterios de aceptación, patrones a
+  imitar. Lo vago dispara escaneos anchos que queman contexto.
+- **Corrige temprano**: `Esc` para frenar, `Esc Esc`/`/rewind` para volver a un checkpoint.
+- **`/usage`**: atribuye consumo a skills/subagentes/plugins/MCP — retira lo que no se usa.
+- **Effort por tarea**: `/effort` bajo para lo simple; keyword `ultrathink` en el prompt para
+  razonamiento puntual sin cambiar la sesión.
+- **`/btw`** para preguntas laterales sin ensuciar el historial; **`/rename`** + `--resume`
+  para retomar sesiones largas como ramas.
+- **Permisos sin fricción**: allowlist de comandos rutinarios (ya en `global/settings.json`)
+  o modo `auto` (clasificador aprueba lo seguro) para tareas confiables.
+
 ## Verificación rápida
 
 ```bash
@@ -139,7 +208,9 @@ claude plugin list                   # 3 LSP enabled; 10 stack/dominio + expo di
 
 En una sesión nueva: statusline visible con % de contexto · `/context` sin skills de stack
 (en un dir neutro) · leer un `.go` carga `rules/go.md` · pedir leer `.env` → denegado ·
-`/research <pregunta>` responde con versión + fuente.
+`/research <pregunta>` responde con versión + fuente · `/setup-project` aparece en el
+menú `/`.
 
 > Nota: la config por proyecto (`.claude/` y `CLAUDE.md` de cada repo) NO vive aquí —
-> viaja en el git de cada repositorio. Este repo solo aporta el snippet `enabledPlugins`.
+> viaja en el git de cada repositorio. Este repo aporta el protocolo que la genera y
+> audita (`/setup-project`) y los plugins que habilita.

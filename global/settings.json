@@ -40,11 +40,17 @@
       "Bash(git log:*)",
       "Bash(git branch:*)",
       "Bash(git show:*)",
+      "Bash(git remote -v)",
+      "Bash(git ls-files:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr list:*)",
       "Bash(gh issue list:*)",
       "Bash(gh run view:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(claude plugin list:*)",
+      "Bash(claude plugin marketplace list:*)",
+      "Bash(claude mcp list:*)",
+      "Bash(wc -l:*)"
     ],
     "deny": [
       "Bash(rm -rf:*)",
@@ -55,14 +61,18 @@
       "Read(**/.env.*)",
       "Read(**/secrets.env)",
       "Read(**/*.pem)",
+      "Read(**/*.p12)",
+      "Read(**/*.jks)",
+      "Read(**/*.keystore)",
       "Read(**/id_rsa*)",
       "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
       "Edit(**/.env)",
       "Edit(**/.env.*)",
       "Edit(**/secrets.env)"
     ]
   },
-  "model": "claude-fable-5[1m]",
+  "model": "fable",
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh",

@@ -4,7 +4,7 @@ You are restoring Gastón's Claude Code global configuration on a fresh machine 
 directory. Follow these steps in order. Do not skip verification.
 
 ## 1. Preconditions
-- Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.154**
+- Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.154** (tested with 2.1.199)
   (needed for `defaultEnabled: false` in marketplaces; older versions are handled by a
   fallback in `install.sh` but should be upgraded). If missing, install it
   (`npm install -g @anthropic-ai/claude-code`) and ask the user to log in (`claude` → follow auth).
@@ -46,6 +46,8 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
   `api-design`, `bots`, `realtime`, `background-jobs`) **installed but disabled**.
 - `/research <question>` works in a session (runs in the `docs-researcher` subagent and
   returns version + snippet + source).
+- `/setup-project` is listed in the `/` menu (global skill that creates/audits per-project
+  config).
 - Start a session in `$HOME` and run `/context`: the global `CLAUDE.md` must be loaded and
   NO stack-plugin skills must appear (they are per-project).
 - The statusline shows model, directory and a context-usage bar.
@@ -53,8 +55,12 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
   `global/rules/go.md` should load (path-scoped rule).
 - Ask to read a `.env` file: it must be denied by permissions.
 
-## 4. Per-project enablement (tell the user)
-Stack plugins are enabled per project via the project's `.claude/settings.json`:
+## 4. Per-project configuration (tell the user)
+The primary flow is `/setup-project` inside each repo (new, legacy, or already configured):
+it detects the stack, audits/preserves any existing AI config, enables the right plugins,
+and generates token-lean local config (protocol: `global/skills/setup-project/SKILL.md`).
+
+Manual alternative — stack plugins via the project's `.claude/settings.json`:
 
 ```json
 { "enabledPlugins": { "nestjs@gaston-plugins": true } }
@@ -74,6 +80,9 @@ React Native projects co-enable the official Expo plugin:
 CLI alternative inside the project: `claude plugin enable <name>@gaston-plugins --scope project`.
 The template repos under `~/Documents/Git/` should carry these snippets in git (see README
 for the per-template table).
+
+To configure a project for someone who is NOT restoring this whole setup (shared directory,
+teammate's machine): follow `AGENT-PROJECT-SETUP.md` instead of this file.
 
 ## 5. Optional extras (ask the user)
 - VCS CLIs: `gh` (GitHub) and/or `az` with the `azure-devops` extension (Azure DevOps),

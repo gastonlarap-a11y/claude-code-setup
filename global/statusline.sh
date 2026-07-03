@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Claude Code status line: [Model] dir | branch | ▓▓▓░░░░░░░ 34% ctx | 5h: 12%
+# Claude Code status line: [Model] dir | branch | ▓▓▓░░░░░░░ 34% ctx | 5h: 12% | 7d: 41%
 # Receives session JSON on stdin (see code.claude.com/docs/en/statusline).
 set -u
 
@@ -15,6 +15,7 @@ model=$(printf '%s' "$input" | jq -r '.model.display_name // "Claude"')
 dir=$(printf '%s' "$input" | jq -r '.workspace.current_dir // "."')
 ctx=$(printf '%s' "$input" | jq -r '.context_window.used_percentage // 0 | floor')
 five_h=$(printf '%s' "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty | floor? // empty')
+seven_d=$(printf '%s' "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty | floor? // empty')
 
 branch=$(git -C "$dir" branch --show-current 2>/dev/null)
 
@@ -37,5 +38,6 @@ out="[${model}] $(basename "$dir")"
 [ -n "$branch" ] && out="${out} | ${branch}"
 out="${out} | ${color}${bar} ${ctx}% ctx${reset}"
 [ -n "$five_h" ] && out="${out} | 5h: ${five_h}%"
+[ -n "$seven_d" ] && out="${out} | 7d: ${seven_d}%"
 
 printf '%b' "$out"
