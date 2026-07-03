@@ -1,0 +1,3 @@
+typescript-lsp@claude-plugins-official
+gopls-lsp@claude-plugins-official
+kotlin-lsp@claude-plugins-official

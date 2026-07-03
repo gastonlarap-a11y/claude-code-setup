@@ -1,0 +1,30 @@
+# Global instructions
+
+## About me
+Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android (Kotlin), React/Next.js, Flutter/Dart. I also work with SQL/NoSQL databases, Docker, Kubernetes, testing at every level, and CI/CD with GitHub Actions. I maintain per-stack template repos under `~/Documents/Git/`.
+
+## Language
+- Always answer **in Spanish** (explanations, summaries, questions).
+- Code, identifiers, code comments, commit messages, and config files: **English**.
+
+## Engineering standards (every project)
+- Design for scale and for other readers: clear module boundaries, self-documenting names, small focused functions. Someone else must understand this code without me.
+- Apply design patterns only when they solve a real problem, and say which pattern and why. No over-engineering, no speculative abstractions.
+- Every feature ships with its tests. Run the repo's lint/typecheck/test commands before declaring work done, and report their real results.
+- Respect each repo's existing architecture (its `CLAUDE.md` / `ARCHITECTURE.md`); never introduce a competing style.
+- Handle errors explicitly at boundaries; never swallow exceptions or ignore returned errors.
+
+## Workflow rules
+- Before writing code against a third-party library, check current docs via the `context7` MCP tools — do not trust training data for API surfaces or latest versions.
+- Prefer the `gh` CLI for simple GitHub operations (view/list/status); use the GitHub MCP only for complex multi-step operations.
+- Prefer editing existing files over creating new ones. No README/docs files unless asked.
+- For Docker/Kubernetes, CI/CD, database, or architecture-decision tasks, consult the matching global skill (`docker-kubernetes`, `ci-cd`, `databases`, `architecture`).
+
+## Git conventions
+- Clean commits: **no `Co-Authored-By` trailers, no "Generated with" footers, no AI mentions.**
+- Conventional Commits style: `feat|fix|refactor|test|chore(scope): message`.
+- Never commit secrets; `.env*` and `secrets*` files stay out of git.
+- Never push directly to `main`; never `git push --force` unless I explicitly ask.
+
+# Compact instructions
+When compacting, preserve: the list of modified files, the exact build/test commands used and their latest results, key architectural decisions made this session, and any unresolved errors or pending steps.
