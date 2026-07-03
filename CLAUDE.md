@@ -2,6 +2,8 @@
 
 Portable Claude Code configuration and the `gaston-plugins` marketplace. Agent entry points:
 
+- **Not sure / any machine, any user**: `START.md` — interactive bootstrap that detects
+  the environment, interviews the user, and routes to the right procedure below.
 - **Restore a machine (owner only)**: `AGENT-INSTALL.md` → runs `install.sh`, which
   OVERWRITES `~/.claude/`. Never suggest it to configure a mere project or for other users.
 - **Configure/improve any project (anyone)**: `AGENT-PROJECT-SETUP.md` → executes

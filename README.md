@@ -41,6 +41,7 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron) — con `references/` que cargan solo si hacen falta |
 | `plugins.txt` / `install.sh` | Instalador | Idempotente: copia config, registra marketplace, instala plugins |
 | `secrets.env(.example)` | Keys reales (gitignored) / plantilla | `install.sh` las inyecta en `~/.claude/settings.local.json` |
+| `START.md` | Bootstrap interactivo para agentes | Punto de entrada único: detecta el entorno, entrevista al usuario y enruta a la guía correcta (global, proyecto o ambos; owner o tercero; incluye Windows) |
 | `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración de MI máquina (sobreescribe `~/.claude/`) + verificación |
 | `AGENT-PROJECT-SETUP.md` | Guía en inglés para agentes | Configurar el proyecto de CUALQUIER persona usando este directorio, sin tocar su config global |
 | `CLAUDE.md` (raíz) | Contexto de este repo | Orienta a cualquier agente abierto aquí: entradas, reglas de edición y versionado de plugins |
@@ -61,9 +62,20 @@ skills de Flutter. Cada proyecto habilita lo suyo (siguiente sección).
 
 ## Restaurar una máquina nueva
 
-**Opción A — con un agente de IA (recomendada):** abre Claude Code en este directorio y dile:
+**Opción A — con un agente de IA (recomendada), sirve para CUALQUIER máquina o persona:**
+abre Claude Code en este directorio y dile:
 
-> Lee AGENT-INSTALL.md y aplica toda la configuración de este directorio.
+> Lee START.md y configúrate.
+
+El agente detecta el entorno (macOS/Linux/Windows, CLI, secrets), te entrevista solo por
+lo que no puede detectar (¿owner o tercero? ¿global, proyecto o ambos? ¿máquina personal
+o de empresa?) y ejecuta la ruta correcta: restauración global (`AGENT-INSTALL.md`),
+configuración de proyectos (`AGENT-PROJECT-SETUP.md`), o ambas — sin tocar jamás el
+`~/.claude` de un tercero.
+
+> **Windows**: `install.sh` es bash — no corre en PowerShell/CMD. Instala Git for Windows
+> (`winget install --id Git.Git -e`) y trabaja desde **Git Bash** (START.md lo detecta y
+> te lo indica solo).
 
 **Opción B — manual:**
 

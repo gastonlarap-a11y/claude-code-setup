@@ -14,6 +14,14 @@ directory. Follow these steps in order. Do not skip verification.
 - Dart SDK ≥ 3.9 is only needed inside Flutter projects (for the bundled Dart MCP/LSP);
   do not install it globally as part of this restore.
 
+### Windows
+`install.sh` is bash — PowerShell/CMD cannot run it. Install Git for Windows
+(`winget install --id Git.Git -e`) and run EVERYTHING below from **Git Bash**
+(WSL also works, but then `~/.claude` lives inside the distro, not in Windows).
+Path notes for Git Bash: `C:\Users\<user>\...` is written `/c/Users/<user>/...`,
+and `~` resolves to the Windows user home, so the config lands in
+`C:\Users\<user>\.claude`. Install `jq` with `winget install --id jqlang.jq -e`.
+
 ## 2. Restore
 Run:
 

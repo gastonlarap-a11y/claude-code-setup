@@ -2,7 +2,8 @@
 
 You are an AI agent configuring a TARGET project (new or existing, any stack, any owner)
 for Claude Code, using this directory as your toolbox. If the user has not said which
-project, ask.
+project, ask. (Reached via `START.md`? The interview already settled who the user is and
+which project — don't re-ask.)
 
 1. **Execute the protocol.** Read `global/skills/setup-project/SKILL.md` (and its
    `references/templates.md`) and follow it against the target project. It handles all
