@@ -14,8 +14,9 @@ Portable Claude Code configuration and the `gaston-plugins` marketplace. Agent e
 
 - Plugins are edited HERE under `plugins/`, never in `~/.claude/`. Any plugin change bumps
   `version` in BOTH `.claude-plugin/marketplace.json` (that entry) and the plugin's own
-  `.claude-plugin/plugin.json`, then republish:
-  `claude plugin marketplace update gaston-plugins && claude plugin update <name>@gaston-plugins`.
+  `.claude-plugin/plugin.json`, then validate & republish:
+  `claude plugin validate ./plugins/<name> --strict && claude plugin marketplace update gaston-plugins && claude plugin update <name>@gaston-plugins`.
+  CI (`.github/workflows/validate.yml`) re-checks JSON, version parity and schemas on push.
 - Global config lives in `global/` and reaches `~/.claude/` only via `install.sh`.
 - Token discipline: skill bodies and `references/` load on demand — keep descriptions sharp
   and short; CLAUDE.md-style content stays within the budgets defined in

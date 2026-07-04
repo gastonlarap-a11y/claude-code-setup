@@ -2,6 +2,7 @@
 # PostToolUse hook (Edit|Write): auto-format the touched file by extension.
 # Tolerant by design — silently no-ops when the formatter is not installed,
 # so the same global config works on any machine.
+# shellcheck disable=SC2015  # `cmd && fmt || true` is the whole point: never fail the hook
 set -uo pipefail
 
 input="$(cat)"

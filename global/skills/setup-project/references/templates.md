@@ -136,6 +136,9 @@ verified command. Add the missing ones; never rename existing scripts that work.
       "Bash(<verified lint cmd>:*)",
       "Bash(<verified build cmd>:*)"
     ],
+    "ask": [
+      "Bash(git push *)"
+    ],
     "deny": [
       "Read(./**/dist/**)",
       "Read(./**/*.generated.*)",
@@ -147,7 +150,28 @@ verified command. Add the missing ones; never rename existing scripts that work.
 ```
 
 Drop `enabledPlugins` when no marketplace is available. Adjust deny globs to the real
-generated/vendored paths found in step 1.
+generated/vendored paths found in step 1. `ask` fits actions the team wants confirmed,
+not banned (deploys, pushes, migrations); drop the block if the user prefers no prompt.
+
+## Hooks (only for guarantees with a deterministic tool behind them)
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "if": "Edit(*.<ext>)", "command": "<verified formatter cmd>" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The `if` filter (permission-rule syntax) keeps the hook from spawning on every edit —
+scope it to the files the tool actually handles.
 
 ## .claude/rules/<topic>.md (path-scoped)
 

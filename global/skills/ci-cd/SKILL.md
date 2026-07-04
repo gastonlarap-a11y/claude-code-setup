@@ -16,18 +16,18 @@ Standard stages, in order, failing fast:
 Rules:
 - Trigger on `pull_request` + `push` to `main`. Deploy jobs additionally gate on `github.ref`.
 - `concurrency:` group per branch with `cancel-in-progress: true` — never waste minutes on stale commits.
-- Pin action versions to a major tag (`actions/checkout@v4`), never `@main`.
+- Pin action versions to a major tag (`actions/checkout@v7`), never `@main`.
 - `permissions:` block at workflow level, least privilege (`contents: read` default).
 - Secrets via repo/environment secrets; never echo them; prefer OIDC federation over long-lived cloud keys.
 
 ## Dependency caching per stack
-- **Node/pnpm**: `actions/setup-node@v4` with `cache: pnpm` (+ corepack enable).
-- **Go**: `actions/setup-go@v5` with `cache: true` (module + build cache).
+- **Node/pnpm**: `actions/setup-node@v6` with `cache: pnpm` (+ corepack enable).
+- **Go**: `actions/setup-go@v6` with `cache: true` (module + build cache).
 - **Flutter**: `subosito/flutter-action@v2` with `cache: true`.
-- **Android/Gradle**: `gradle/actions/setup-gradle@v4` (manages Gradle cache correctly).
+- **Android/Gradle**: `gradle/actions/setup-gradle@v6` (manages Gradle cache correctly).
 
 ## Docker builds in CI
-- `docker/build-push-action@v6` with `cache-from/cache-to: type=gha`.
+- `docker/build-push-action@v7` with `cache-from/cache-to: type=gha`.
 - Tag with both the git SHA and the version tag; push only from `main`/tags.
 
 ## Deploys

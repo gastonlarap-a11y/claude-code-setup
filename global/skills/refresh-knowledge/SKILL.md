@@ -6,10 +6,10 @@ disable-model-invocation: true
 
 # Refresh marketplace knowledge
 
-Target: the marketplace repo at `~/Desktop/claude-code-setup`. Scope: $ARGUMENTS (a plugin name, a specific skill, or empty = the highest-drift-risk files: every `recipes` skill and every `references/*.md`).
+Target: the marketplace repo — resolve its path from `claude plugin marketplace list` (the `source` of `gaston-plugins`); if that fails and the current directory contains `.claude-plugin/marketplace.json` naming `gaston-plugins`, use it. Scope: $ARGUMENTS (a plugin name, a specific skill, or empty = the highest-drift-risk files: every `recipes` skill and every `references/*.md`).
 
 ## Procedure
-1. **Inventory**: list the in-scope files under `plugins/*/skills/**`. For each, extract the concrete claims: package names, APIs/methods, version-sensitive statements, limits/quotas.
+1. **Inventory**: list the in-scope files under `plugins/*/skills/**` AND `global/skills/**` (the cross-stack skills — ci-cd action pins, docker-kubernetes base images, database tooling — drift just like plugin recipes). For each, extract the concrete claims: package names, APIs/methods, action/image version tags, version-sensitive statements, limits/quotas. On a full pass, also include the repo's own Claude Code claims (README "Novedades"/version minimums, START.md/AGENT-INSTALL.md) — verify those against `code.claude.com/docs/en/changelog` and `code.claude.com/docs/en/whats-new`.
 2. **Verify** each claim against the latest stable official source (context7 + official docs — research in English; use the `docs-researcher` agent for batches to keep context clean). A claim is stale if: the recommended package changed, the API surface changed, a limit/flow changed, or a clearly better official approach now exists.
 3. **Update** stale entries in place, keeping the existing format and conventions: concise pointer-style recipes (lib + minimal pattern + official source), English, same file structure. Do not grow files with tutorials — recipes stay recipes.
 4. **Version bump**: for each modified plugin, bump `version` (patch) in BOTH `.claude-plugin/marketplace.json` (that plugin's entry) and the plugin's own `plugin.json`.

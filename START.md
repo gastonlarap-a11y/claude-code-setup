@@ -11,18 +11,20 @@ Gather silently:
 
 - **OS and shell**: platform, and on Windows whether you are in Git Bash, WSL, or
   PowerShell/CMD (`echo $SHELL` / `$PSVersionTable` behavior tells you).
-- **Claude CLI**: `claude --version` (needs ≥ 2.1.154; install:
-  `npm install -g @anthropic-ai/claude-code`).
+- **Claude CLI**: `claude --version` (needs ≥ 2.1.187; install with the native installer:
+  `curl -fsSL https://claude.ai/install.sh | bash` on macOS/Linux/WSL,
+  `irm https://claude.ai/install.ps1 | iex` on Windows PowerShell).
 - **Existing global config**: does `~/.claude/` exist with a `CLAUDE.md`/`settings.json`?
 - **Secrets**: does `secrets.env` exist in this directory?
 - **Marketplace**: `claude plugin marketplace list` — is `gaston-plugins` registered?
 - **Current directory**: are you inside this toolbox repo, or inside a target project?
 
-Windows + PowerShell/CMD: `install.sh` is bash. Before any global restore, have the
-user install Git for Windows (`winget install --id Git.Git -e`) and continue in
-**Git Bash** (paths become `/c/Users/<user>/...`; `~/.claude` lands in
-`C:\Users\<user>\.claude`). `jq`: `winget install --id jqlang.jq -e`.
-Project-only configuration does not need bash — skip this requirement for that route.
+Windows: running Claude Code needs no Git Bash (since 2.1.120 it falls back to the
+PowerShell tool). For a global restore there are two routes: `install.ps1` natively from
+PowerShell, or `install.sh` from Git Bash/WSL2. The bash-based hooks and statusline stay
+inert without Git for Windows (`winget install --id Git.Git -e`) — say so, everything else
+works. `jq`: `winget install --id jqlang.jq -e`. Project-only configuration needs none of
+this — skip the requirement for that route.
 
 ## Phase 1 — Interview (only the gaps)
 
@@ -46,7 +48,7 @@ State the chosen route in one short summary and get a yes before executing.
 
 | Who | Scope | Do this |
 |---|---|---|
-| Owner | Global | Follow `AGENT-INSTALL.md` (runs `install.sh`; on Windows, from Git Bash). Without secrets: copy `secrets.env.example` → `secrets.env` only when the user has the real key; otherwise run anyway and report the WARNING as expected. |
+| Owner | Global | Follow `AGENT-INSTALL.md` (runs `install.sh`; on native Windows, `install.ps1` from PowerShell). Without secrets: copy `secrets.env.example` → `secrets.env` only when the user has the real key; otherwise run anyway and report the WARNING as expected. |
 | Owner | Project(s) | Global first if this machine never had it (plugins live at user scope). Then, per project: follow `AGENT-PROJECT-SETUP.md` → run the `setup-project` protocol inside that repo. |
 | Someone else | Project(s) | Follow `AGENT-PROJECT-SETUP.md` only. Optionally register the marketplace (`claude plugin marketplace add <this directory>`). |
 | Someone else | Global | **Refuse the restore** — `install.sh` overwrites `~/.claude` with the owner's personal identity, language and git rules. Offer instead: marketplace registration + per-project setup, and point them to `global/` as reference material for building their own. |

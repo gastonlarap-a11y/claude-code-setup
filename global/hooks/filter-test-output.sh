@@ -26,6 +26,7 @@ case "$cmd" in
     if command -v jq >/dev/null 2>&1; then
       printf '%s' "$cmd" | jq -Rs '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: {command: ("bash \"$HOME/.claude/hooks/run-test-filtered.sh\" " + (. | @sh))}}}'
     elif [ -n "$PY" ]; then
+      # shellcheck disable=SC2016  # $HOME must stay literal: the shell expands it when the hook command runs
       printf '%s' "$cmd" | "$PY" -c '
 import json, shlex, sys
 cmd = sys.stdin.read()
