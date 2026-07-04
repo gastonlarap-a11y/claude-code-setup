@@ -73,6 +73,7 @@ if command -v claude >/dev/null 2>&1; then
   fi
 
   # Personal marketplace (this repo) — register or refresh, idempotent.
+  # shellcheck disable=SC2015  # echo as the && branch cannot fail
   claude plugin marketplace add "$SRC" 2>/dev/null \
     && echo "  marketplace: gaston-plugins registered" \
     || { claude plugin marketplace update gaston-plugins 2>/dev/null \
@@ -86,22 +87,13 @@ if command -v claude >/dev/null 2>&1; then
       || echo "  plugin skipped (already installed?): $plugin"
   done < "$SRC/plugins.txt"
 
-  # Safety belt for Claude Code < 2.1.154 (ignores defaultEnabled: false and
-  # enables on install): force stack plugins off at user scope; projects
-  # re-enable them via their own .claude/settings.json.
-  for p in expo@claude-plugins-official nestjs@gaston-plugins go@gaston-plugins \
-           android-kotlin@gaston-plugins react-nextjs@gaston-plugins \
-           flutter@gaston-plugins react-native@gaston-plugins \
-           dotnet@gaston-plugins \
-           api-design@gaston-plugins bots@gaston-plugins \
-           realtime@gaston-plugins background-jobs@gaston-plugins \
-           ux@gaston-plugins; do
-    claude plugin disable "$p" --scope user >/dev/null 2>&1 || true
-  done
+  # Stack/domain plugins install disabled: defaultEnabled:false in the manifests
+  # (honored since CLI 2.1.154, our documented minimum) plus explicit false entries
+  # in global/settings.json enabledPlugins. Projects re-enable their own.
   echo "  stack plugins installed globally, disabled by default (enable per project)"
 else
-  echo "  WARNING: 'claude' CLI not found. Install Claude Code first:"
-  echo "    npm install -g @anthropic-ai/claude-code"
+  echo "  WARNING: 'claude' CLI not found. Install Claude Code first (native installer, auto-updates):"
+  echo "    curl -fsSL https://claude.ai/install.sh | bash"
   echo "  then re-run this script to register MCP servers and plugins."
 fi
 

@@ -73,6 +73,25 @@
     ]
   },
   "model": "fable",
+  "fallbackModel": ["claude-opus-4-8", "claude-sonnet-5"],
+  "language": "spanish",
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "sandbox": {
+    "enabled": true,
+    "credentials": {
+      "files": [
+        { "path": "~/.ssh", "mode": "deny" },
+        { "path": "~/.aws", "mode": "deny" }
+      ],
+      "envVars": [
+        { "name": "CONTEXT7_API_KEY", "mode": "deny" }
+      ]
+    },
+    "excludedCommands": ["docker *", "gh *", "kubectl *"]
+  },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh",
@@ -86,6 +105,11 @@
           {
             "type": "command",
             "command": "bash \"$HOME/.claude/hooks/filter-test-output.sh\""
+          },
+          {
+            "type": "command",
+            "if": "Bash(git *)",
+            "command": "bash \"$HOME/.claude/hooks/guard-git-push.sh\""
           }
         ]
       }

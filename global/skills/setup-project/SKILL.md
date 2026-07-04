@@ -132,6 +132,7 @@ plugin for the project's language if not already enabled.
 Stack without a matching plugin, or no marketplace available: encode the equivalent
 essentials as local `.claude/rules/` + `.claude/skills/` instead — derived from this
 project's code first, completed via the `research` skill (or official docs) only for gaps.
+Project skills in `.claude/skills/` load on their own, no marketplace needed (CLI ≥ 2.1.191).
 The result must be self-sufficient: the project's config cannot depend on files that exist
 only on one person's machine.
 
@@ -150,6 +151,9 @@ Only questions detection cannot answer — skip any the repo already answers:
 - Backend HTTP service without OpenAPI → offer OpenAPI/Swagger. If accepted, configure it
   fully per the stack plugin (nestjs `api-conventions` · dotnet `architecture` · go
   `tooling`); record the docs URL in the README and spec-generation in the runner.
+- **No CI workflow detected** (new or legacy project) → ALWAYS ask whether to add one
+  (built per the `ci-cd` skill). Never create CI without an explicit yes; if CI already
+  exists, do not offer.
 - Deployment target not detectable → README `Deployment` section.
 - Brand-new project → README language.
 - .NET only → unix-first (`Makefile`) or Windows-first (`scripts/*.ps1`) team.
@@ -170,6 +174,7 @@ approved.
 - `wc -l` per file within budget; report total always-loaded lines (CLAUDE.md + unscoped
   rules) before vs after.
 - `.gitignore` covers `CLAUDE.local.md`, `.claude/settings.local.json` and secret files.
+- `/doctor` reports no configuration issues for the project.
 - Tell the user to open a fresh session and check `/context` (real cost) and that routine
   commands no longer prompt for permission; after a few days, `/usage` shows which skills,
   subagents, plugins and MCP servers actually consume tokens — retire what goes unused.

@@ -4,10 +4,11 @@ You are restoring Gastón's Claude Code global configuration on a fresh machine 
 directory. Follow these steps in order. Do not skip verification.
 
 ## 1. Preconditions
-- Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.154** (tested with 2.1.199)
-  (needed for `defaultEnabled: false` in marketplaces; older versions are handled by a
-  fallback in `install.sh` but should be upgraded). If missing, install it
-  (`npm install -g @anthropic-ai/claude-code`) and ask the user to log in (`claude` → follow auth).
+- Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.187** (tested with 2.1.201)
+  (2.1.154 honors `defaultEnabled: false`; 2.1.187 adds `sandbox.credentials`, which
+  `global/settings.json` uses). If missing, install it with the native installer
+  (`curl -fsSL https://claude.ai/install.sh | bash`; Windows PowerShell:
+  `irm https://claude.ai/install.ps1 | iex`) and ask the user to log in (`claude` → follow auth).
 - Confirm `jq` is installed — the statusline degrades without it. Install: `brew install jq`
   (macOS) / `winget install --id jqlang.jq -e` (Windows) / `sudo apt install jq` (Linux).
 - Confirm some Python is available (`python3`, `python` or `py` — any ≥3.8): `install.sh`
@@ -18,18 +19,23 @@ directory. Follow these steps in order. Do not skip verification.
   do not install it globally as part of this restore.
 
 ### Windows
-`install.sh` is bash — PowerShell/CMD cannot run it. Install Git for Windows
-(`winget install --id Git.Git -e`) and run EVERYTHING below from **Git Bash**
-(WSL also works, but then `~/.claude` lives inside the distro, not in Windows).
-Path notes for Git Bash: `C:\Users\<user>\...` is written `/c/Users/<user>/...`,
-and `~` resolves to the Windows user home, so the config lands in
-`C:\Users\<user>\.claude`. Install `jq` with `winget install --id jqlang.jq -e`.
+Two routes (running Claude Code itself needs neither Git Bash nor WSL since 2.1.120):
+- **Native (recommended on company machines)**: run `.\install.ps1` from PowerShell —
+  same actions as `install.sh`, no bash needed. Note: the hooks and statusline are bash
+  scripts; without Git for Windows they stay inert (everything else works). Sandboxing
+  is not supported on native Windows — the startup warning is expected.
+- **Git Bash / WSL2**: install Git for Windows (`winget install --id Git.Git -e`) and run
+  `bash install.sh` from Git Bash (WSL also works, but then `~/.claude` lives inside the
+  distro, not in Windows). Git Bash paths: `C:\Users\<user>\...` is `/c/Users/<user>/...`;
+  config lands in `C:\Users\<user>\.claude`.
+
+Install `jq` with `winget install --id jqlang.jq -e`.
 
 ## 2. Restore
 Run:
 
 ```bash
-bash install.sh
+bash install.sh        # native Windows: .\install.ps1 from PowerShell
 ```
 
 This does, idempotently:
@@ -43,9 +49,9 @@ This does, idempotently:
 4. Registers this repo as the `gaston-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
 5. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 7 stack
-   plugins + the 5 domain plugins: api-design, bots, realtime, background-jobs, ux), then
-   force-disables everything except the LSPs at user scope. LSP plugins stay globally
-   enabled via `global/settings.json`.
+   plugins + the 5 domain plugins: api-design, bots, realtime, background-jobs, ux).
+   Stack/domain plugins install disabled (`defaultEnabled: false` in the manifests +
+   explicit `false` entries in `global/settings.json`); LSP plugins stay globally enabled.
 
 If `install.sh` fails at any step, perform that step manually (the script is short — read it).
 
@@ -66,6 +72,10 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
 - Edit a scratch `.go` file: the `format-on-edit.sh` PostToolUse hook must gofmt it, and
   `global/rules/go.md` should load (path-scoped rule).
 - Ask to read a `.env` file: it must be denied by permissions.
+- `/doctor` reports no configuration issues. `/sandbox` shows the resolved sandbox config
+  (macOS/Linux/WSL2; on native Windows a "sandbox unavailable" warning is expected).
+- In a scratch repo on `main`, asking for `git push` must be denied by `guard-git-push.sh`;
+  on a feature branch it goes through.
 
 ## 4. Per-project configuration (tell the user)
 The primary flow is `/setup-project` inside each repo (new, legacy, or already configured):
@@ -101,7 +111,8 @@ teammate's machine): follow `AGENT-PROJECT-SETUP.md` instead of this file.
   depending on which remotes this machine will use. The global CLAUDE.md tells agents to
   install the missing one or pause with instructions.
 - Optional official plugins, not installed by default: `playwright@claude-plugins-official`
-  (browser e2e), `code-review@claude-plugins-official`.
+  (browser e2e), `code-review@claude-plugins-official`, `security-guidance@claude-plugins-official`
+  (reviews Claude's changes for vulnerabilities as it works).
 - Per-project config: each repo under `~/Documents/Git/` carries its own `CLAUDE.md` +
   `.claude/` in git; nothing to restore from here.
 

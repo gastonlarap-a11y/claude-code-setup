@@ -1,0 +1,36 @@
+name: validate
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: JSON well-formedness
+        run: |
+          shopt -s nullglob
+          jq empty .claude-plugin/marketplace.json global/settings.json global/mcp-servers.json
+          for f in plugins/*/.claude-plugin/plugin.json plugins/*/.mcp.json plugins/*/.lsp.json; do
+            jq empty "$f" || { echo "invalid JSON: $f"; exit 1; }
+          done
+
+      - name: Version parity (dual-bump rule)
+        run: bash scripts/check-versions.sh
+
+      - name: shellcheck
+        run: shellcheck install.sh scripts/*.sh global/hooks/*.sh global/statusline.sh
+
+      # claude plugin validate is an offline schema check (official CI recommendation).
+      # If this step ever starts requiring auth, drop it and rely on the steps above.
+      - name: Plugin schema validation
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash
+          export PATH="$HOME/.local/bin:$PATH"
+          claude --version
+          for p in plugins/*/; do
+            claude plugin validate "$p" --strict
+          done

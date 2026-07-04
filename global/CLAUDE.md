@@ -28,6 +28,7 @@ Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android
 
 ## Git conventions
 - **Authorship rule (absolute): commits, PRs, MRs, issues and their descriptions carry ONLY my identity — no `Co-Authored-By` trailers, no "Generated with" footers, no AI attribution of any kind, anywhere.**
+- **Publish only on explicit order**: never commit, push, or open PRs/MRs on your own initiative — on any platform (GitHub via `gh`, Azure DevOps via `az repos`, or other). Only when I explicitly ask ("sube los cambios" or equivalent); then run the full flow (commit → push → PR/MR) with the CLI detected from `git remote -v`.
 - Conventional Commits style: `feat|fix|refactor|test|chore(scope): message`.
 - Never commit secrets; `.env*` and `secrets*` files stay out of git.
 - Never push directly to `main`; never `git push --force` unless I explicitly ask.

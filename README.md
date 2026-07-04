@@ -22,16 +22,17 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 7. [Paso a paso: editar y publicar un plugin](#editar-y-publicar-un-plugin)
 8. [Paso a paso: mantener el conocimiento al día](#mantener-el-conocimiento-al-día)
 9. [Rendimiento: consejos oficiales](#rendimiento-consejos-oficiales)
-10. [Verificación rápida](#verificación-rápida)
+10. [Novedades Claude Code 2026](#novedades-claude-code-2026)
+11. [Verificación rápida](#verificación-rápida)
 
 ## Qué contiene
 
 | Ruta | Qué es | Para qué me sirve |
 |---|---|---|
 | `global/CLAUDE.md` | Instrucciones globales → `~/.claude/CLAUDE.md` | Reglas siempre activas: español/inglés, nunca asumir, investigar proactivamente, VCS por CLI (gh / az devops), autoría limpia |
-| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo, ~45 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH), hooks, statusline, qué plugins están activos |
+| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH), hooks, statusline, qué plugins están activos |
 | `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart: cargan SOLO al tocar archivos de ese lenguaje |
-| `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro) |
+| `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-git-push.sh` (bloquea push directo a main/master) |
 | `global/statusline.sh` | Statusline → `~/.claude/statusline.sh` | Barra con % de contexto usado y % del límite 5h (necesita `jq`) |
 | `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) |
 | `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (haiku): investiga docs en contexto aislado |
@@ -39,7 +40,8 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 12 plugins con `defaultEnabled: false` |
 | `plugins/` (stack) | `nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`, `dotnet` | Convenciones de arquitectura/testing/tooling por stack; flutter trae MCP oficial de Dart + LSP de Dart; los móviles traen `recipes`; dotnet trae EF Core + SQL Server local (OrbStack), Aspire, Azure y ruta de aprendizaje |
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil) — con `references/` que cargan solo si hacen falta |
-| `plugins.txt` / `install.sh` | Instalador | Idempotente: copia config, registra marketplace, instala plugins |
+| `plugins.txt` / `install.sh` / `install.ps1` | Instalador (bash y PowerShell nativo) | Idempotente: copia config, registra marketplace, instala plugins. `install.ps1` = Windows sin Git Bash |
+| `.github/workflows/validate.yml` + `scripts/check-versions.sh` | CI del repo | En cada push: JSON lint, paridad de versiones marketplace↔plugin (regla dual-bump), shellcheck y `claude plugin validate --strict` |
 | `secrets.env(.example)` | Keys reales (gitignored) / plantilla | `install.sh` las inyecta en `~/.claude/settings.local.json` |
 | `START.md` | Bootstrap interactivo para agentes | Punto de entrada único: detecta el entorno, entrevista al usuario y enruta a la guía correcta (global, proyecto o ambos; owner o tercero; incluye Windows) |
 | `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración de MI máquina (sobreescribe `~/.claude/`) + verificación |
@@ -73,17 +75,19 @@ o de empresa?) y ejecuta la ruta correcta: restauración global (`AGENT-INSTALL.
 configuración de proyectos (`AGENT-PROJECT-SETUP.md`), o ambas — sin tocar jamás el
 `~/.claude` de un tercero.
 
-> **Windows**: `install.sh` es bash — no corre en PowerShell/CMD. Instala Git for Windows
-> (`winget install --id Git.Git -e`) y trabaja desde **Git Bash** (START.md lo detecta y
-> te lo indica solo).
+> **Windows**: ejecutar Claude Code ya NO requiere Git Bash (desde 2.1.120 usa PowerShell
+> como shell tool si bash no está). Para restaurar la config tienes dos rutas: `install.ps1`
+> nativo desde PowerShell, o `install.sh` desde Git Bash/WSL2. Nota: los hooks y la
+> statusline son bash — sin Git for Windows quedan inertes (todo lo demás funciona).
 
 **Opción B — manual:**
 
 ```bash
-npm install -g @anthropic-ai/claude-code   # 1. CLI (≥ 2.1.154)
+curl -fsSL https://claude.ai/install.sh | bash   # 1. CLI nativo, auto-actualizable (≥ 2.1.187)
+                                                 #    Windows PowerShell: irm https://claude.ai/install.ps1 | iex
 brew install jq        # 2. statusline — Windows: winget install jqlang.jq / Linux: apt install jq
-cp secrets.env.example secrets.env         # 3. rellena las keys reales
-bash install.sh                            # 4. restaura todo
+cp secrets.env.example secrets.env               # 3. rellena las keys reales
+bash install.sh                                  # 4. restaura todo — Windows nativo: .\install.ps1
 ```
 
 Luego abre una sesión nueva y pasa la [verificación rápida](#verificación-rápida).
@@ -166,14 +170,16 @@ Para "cómo abro un modal en Flutter", "cómo conecto la cámara", "cómo uso ta
 ## Editar y publicar un plugin
 
 ```bash
+# 0. Plugin nuevo desde cero: claude plugin init <name> genera el esqueleto oficial
 # 1. Edita plugins/<name>/... en este repo
 # 2. Prueba en caliente sin instalar:
-claude --plugin-dir ./plugins/<name>    # y /reload-plugins al iterar
+claude --plugin-dir ./plugins/<name>    # y /reload-plugins (o /reload-skills) al iterar
 # 3. Sube version en .claude-plugin/marketplace.json Y plugins/<name>/.claude-plugin/plugin.json
-# 4. Publica:
+# 4. Valida y publica:
+claude plugin validate ./plugins/<name> --strict
 claude plugin marketplace update gaston-plugins
 claude plugin update <name>@gaston-plugins
-# 5. Commit (Conventional, sin menciones de IA) y push
+# 5. Commit (Conventional, sin menciones de IA) y push — el CI repite la validación
 ```
 
 ## Mantener el conocimiento al día
@@ -189,7 +195,7 @@ git add -A && git commit -m "chore: sync claude config"
 ```
 
 - Los plugins se editan SIEMPRE aquí (en `plugins/`), nunca en `~/.claude`.
-- Plugins oficiales opcionales (no instalados): `playwright@claude-plugins-official` (e2e navegador), `code-review@claude-plugins-official`.
+- Plugins oficiales opcionales (no instalados): `playwright@claude-plugins-official` (e2e navegador), `code-review@claude-plugins-official`, `security-guidance@claude-plugins-official` (revisa vulnerabilidades en los cambios mientras Claude trabaja).
 
 ## Rendimiento: consejos oficiales
 
@@ -215,6 +221,30 @@ Destilado de [best-practices](https://code.claude.com/docs/en/best-practices) y
 - **Permisos sin fricción**: allowlist de comandos rutinarios (ya en `global/settings.json`)
   o modo `auto` (clasificador aprueba lo seguro) para tareas confiables.
 
+## Novedades Claude Code 2026
+
+Verificado 2026-07 contra el [changelog](https://code.claude.com/docs/en/changelog) y
+[what's new](https://code.claude.com/docs/en/whats-new) oficiales — `/refresh-knowledge`
+mantiene esta lista al día:
+
+- **Sandbox nativo de Bash** ([`/sandbox`](https://code.claude.com/docs/en/sandboxing)): aislamiento
+  de archivos/red a nivel OS. Ya activo en `global/settings.json`: `sandbox.credentials` bloquea
+  `~/.ssh`/`~/.aws` y la key de context7 para subprocesos; `docker`/`gh`/`kubectl` van excluidos
+  (caen al flujo normal de permisos). macOS/Linux/WSL2; en Windows nativo no aplica (warning esperado).
+- **Auto mode** (ya en plan Pro): un clasificador reemplaza los prompts de permiso — lo seguro corre,
+  lo destructivo se bloquea. Complementa (no reemplaza) la allowlist.
+- **`/code-review`**: bugs de corrección a nivel de esfuerzo elegido; `--fix` aplica, `--comment`
+  comenta el PR, `ultra` = revisión multi-agente en la nube.
+- **Observabilidad**: `/usage` (consumo por skill/subagente/plugin/MCP), `/doctor` (diagnóstico de
+  config), `/cd` (cambiar de directorio sin perder caché), `--safe-mode` (arrancar sin customizaciones).
+- **Modelos**: Sonnet 5 (contexto 1M), Opus 4.8 (effort high por defecto, `/effort xhigh`, fast mode
+  2x costo / 2.5x velocidad). `fallbackModel` (hasta 3 en cadena) ya configurado aquí.
+- **Skills/plugins**: `/reload-skills` sin reiniciar; skills de proyecto en `.claude/skills/` cargan
+  sin marketplace (≥ 2.1.191); `claude plugin init` para scaffolding; `disallowed-tools` en frontmatter.
+- **Windows**: desde 2.1.120 no requiere Git Bash (usa PowerShell tool); instalador nativo recomendado.
+- **Equipo/nube**: `/team-onboarding` (empaqueta tu setup como guía replicable), Routines (agentes
+  cloud programados desde la web), `claude agents` (vista de todas las sesiones).
+
 ## Verificación rápida
 
 ```bash
@@ -226,7 +256,8 @@ claude plugin list                   # 4 LSP enabled; 12 stack/dominio + expo di
 En una sesión nueva: statusline visible con % de contexto · `/context` sin skills de stack
 (en un dir neutro) · leer un `.go` carga `rules/go.md` · pedir leer `.env` → denegado ·
 `/research <pregunta>` responde con versión + fuente · `/setup-project` aparece en el
-menú `/`.
+menú `/` · `/sandbox` muestra la config resuelta (macOS/Linux/WSL2) · pedir `git push`
+estando en `main` → denegado por `guard-git-push.sh`.
 
 > Nota: la config por proyecto (`.claude/` y `CLAUDE.md` de cada repo) NO vive aquí —
 > viaja en el git de cada repositorio. Este repo aporta el protocolo que la genera y
