@@ -19,6 +19,7 @@ description: Gradle conventions for Android — version catalogs, Kotlin DSL, bu
 ## Common tasks
 - `./gradlew assembleDebug` (build), `./gradlew test` (JVM tests), `./gradlew lint`, `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` (dependency tree), `./gradlew dependencyUpdates` if the versions plugin is present.
 - Formatting via ktlint (the global format hook runs `ktlint -F` on edited files); keep a `./gradlew ktlintCheck` task wired in CI.
+- Gradle is the repo's command runner: repeated multi-step workflows become Gradle tasks (convention plugins under `build-logic/`) — no shell scripts, no prose in docs.
 
 ## Performance
 - `gradle.properties`: `org.gradle.caching=true`, `org.gradle.parallel=true`, `org.gradle.configuration-cache=true` (fix violations rather than disabling it).

@@ -38,3 +38,5 @@ for _, tt := range tests {
 - Default run: `go test ./... -race -shuffle=on`. Coverage check: `go test ./... -cover`.
 - The race detector is not optional — a PR that only passes without `-race` is broken.
 - Run `go vet ./...` alongside tests; report real output.
+- When the repo has a `Makefile`, its targets (`make test`, `make lint`) are the source of
+  truth — use and extend them instead of raw invocations.

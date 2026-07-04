@@ -1,6 +1,6 @@
 ---
 name: tooling
-description: Go tooling conventions — golangci-lint configuration, module hygiene, code generation and release practices. Use when setting up linting, managing go.mod, generating code, or preparing releases in a Go project.
+description: Go tooling conventions — golangci-lint configuration, module hygiene, code generation, Makefile as command runner, OpenAPI for HTTP services and release practices. Use when setting up linting, managing go.mod, generating code, documenting an API, or preparing releases in a Go project.
 ---
 
 # Go tooling conventions
@@ -19,6 +19,16 @@ description: Go tooling conventions — golangci-lint configuration, module hygi
 - Generated code is committed, marked with the standard `// Code generated ... DO NOT EDIT.` header, and regenerated via `go generate ./...` — never hand-edited.
 - Preferred generators: `sqlc` for queries, `mockgen`/`moq` for interface mocks (only interfaces the tests actually need), `stringer` for enums.
 - CI verifies generation is current: regenerate + `git diff --exit-code`.
+
+## OpenAPI (HTTP services)
+- No single standard: spec-first with `oapi-codegen` (the spec is the contract; handlers and
+  types generated, pairing with the codegen rules above) or code-first via `swaggo`
+  annotations / a spec-generating framework (e.g. huma).
+- Prefer spec-first for new services; verify current tools and versions via `/research`.
+
+## Command runner
+- Repo commands centralize in the root `Makefile` — new repeated commands become targets
+  (`run` `build` `test` `lint` `generate`), not prose in docs.
 
 ## Build and release
 - Reproducible builds: `CGO_ENABLED=0`, `-trimpath`, version injected via `-ldflags "-X main.version=..."`.

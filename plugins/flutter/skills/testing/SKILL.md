@@ -26,3 +26,4 @@ description: Flutter testing conventions — unit tests, widget tests, golden te
 
 ## Commands
 - `flutter analyze` + `flutter test` before declaring done; report real output. Coverage: `flutter test --coverage`.
+- Repo commands centralize in a `Makefile` (`make test`/`analyze`/`build`) or melos scripts when `melos.yaml` exists — check the README and extend those instead of raw invocations.

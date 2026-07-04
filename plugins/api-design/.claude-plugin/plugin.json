@@ -1,7 +1,7 @@
 {
   "name": "api-design",
   "displayName": "API Design",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Cross-stack API design: resource modeling, auth, webhooks, versioning and idempotency",
   "author": { "name": "Gaston Lara" },
   "defaultEnabled": false

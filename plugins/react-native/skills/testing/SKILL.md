@@ -24,3 +24,4 @@ description: React Native testing conventions — Jest + React Native Testing Li
 
 ## Commands
 - `npm test` (or `pnpm test`) + `npm run lint` + `npx tsc --noEmit` before declaring done; report real results. State explicitly when e2e was not run (needs emulator/build).
+- All repo commands live in `package.json` scripts with standard names (`dev` `build` `test` `test:e2e` `lint` `typecheck`) — add new ones there, never as prose in docs.

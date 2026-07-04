@@ -10,7 +10,7 @@
       "name": "nestjs",
       "source": "./plugins/nestjs",
       "description": "NestJS (Fastify) architecture, testing and API conventions",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "defaultEnabled": false,
       "category": "stack"
     },
@@ -18,7 +18,7 @@
       "name": "go",
       "source": "./plugins/go",
       "description": "Go project layout, error handling, testing and tooling conventions",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "defaultEnabled": false,
       "category": "stack"
     },
@@ -26,7 +26,7 @@
       "name": "android-kotlin",
       "source": "./plugins/android-kotlin",
       "description": "Android Kotlin/Compose architecture, testing and Gradle conventions",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "defaultEnabled": false,
       "category": "stack"
     },
@@ -34,7 +34,7 @@
       "name": "react-nextjs",
       "source": "./plugins/react-nextjs",
       "description": "React/Next.js App Router architecture, testing and UI conventions",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "defaultEnabled": false,
       "category": "stack"
     },
@@ -42,15 +42,15 @@
       "name": "flutter",
       "source": "./plugins/flutter",
       "description": "Flutter/Dart conventions plus official Dart MCP server and Dart LSP",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "defaultEnabled": false,
       "category": "stack"
     },
     {
       "name": "dotnet",
       "source": "./plugins/dotnet",
-      "description": "C#/.NET enterprise stack: ASP.NET Core, EF Core + SQL Server, xUnit/Testcontainers and Azure with local emulation",
-      "version": "1.0.0",
+      "description": "C#/.NET enterprise stack: ASP.NET Core architecture, EF Core + SQL Server, xUnit/Testcontainers testing and Azure deployment with full local emulation",
+      "version": "1.1.0",
       "defaultEnabled": false,
       "category": "stack"
     },
@@ -58,7 +58,7 @@
       "name": "react-native",
       "source": "./plugins/react-native",
       "description": "React Native + Expo conventions (pair with the official expo plugin)",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "defaultEnabled": false,
       "category": "stack"
     },
@@ -66,15 +66,15 @@
       "name": "api-design",
       "source": "./plugins/api-design",
       "description": "Cross-stack API design: resource modeling, auth, webhooks, versioning and idempotency",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "defaultEnabled": false,
       "category": "domain"
     },
     {
       "name": "bots",
       "source": "./plugins/bots",
-      "description": "Bot architecture for Telegram, Discord and WhatsApp: ingestion, routing, state and rate limits",
-      "version": "1.0.0",
+      "description": "Bot architecture for Telegram, Discord and WhatsApp: webhooks vs polling, command routing, conversation state and queues",
+      "version": "1.0.1",
       "defaultEnabled": false,
       "category": "domain"
     },
@@ -97,8 +97,8 @@
     {
       "name": "ux",
       "source": "./plugins/ux",
-      "description": "Cross-platform UX: screen states, perceived performance, accessibility minimums and platform conventions (web, Android, Flutter/RN)",
-      "version": "1.0.0",
+      "description": "Cross-platform user experience: screen states, perceived performance, accessibility minimums and platform conventions (web, Android, Flutter/RN)",
+      "version": "1.0.1",
       "defaultEnabled": false,
       "category": "domain"
     }

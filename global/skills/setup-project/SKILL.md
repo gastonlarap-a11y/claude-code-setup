@@ -1,6 +1,6 @@
 ---
 name: setup-project
-description: Create, audit or improve a project's Claude Code configuration (CLAUDE.md, .claude/rules, skills, settings, plugins) adapted to the project's real stack, size and conventions. Use when a project has no CLAUDE.md or .claude/ config, when the user asks to set up, review or improve the AI/agent configuration, or when drift is detected (a documented command fails, a stated convention contradicts the code). Works on new, legacy and already-configured projects; never discards existing instructions.
+description: Create, audit or improve a project's Claude Code configuration (CLAUDE.md, README, .claude/rules, skills, settings, plugins) adapted to the project's real stack, size and conventions. Use when a project has no CLAUDE.md or .claude/ config, when the user asks to set up, review or improve the AI/agent configuration, or when drift is detected (a documented command fails, a stated convention contradicts the code). Works on new, legacy and already-configured projects; never discards existing instructions.
 argument-hint: "[optional focus: audit | a subdirectory | a concern like 'testing']"
 ---
 
@@ -20,7 +20,8 @@ Hard rules:
 - **Verify, don't trust.** Every command you document must have been run by you here (or
   copied verbatim from CI). Every path you mention must exist.
 - **Ask when signals conflict** (two package managers, mixed test runners, docs that
-  contradict code): ask the user; never pick silently.
+  contradict code): ask the user; never pick silently. Also ask the step-3 proactive
+  questions — batched, once.
 - **Nothing is written before the step-4 proposal is approved.**
 - Config files in English. Conversation and report in the user's language.
 
@@ -33,7 +34,8 @@ Hard rules:
 - **Shape**: monorepo markers (`pnpm-workspace.yaml`, `workspaces`, `turbo.json`, `nx.json`,
   `go.work`, `melos.yaml`, Gradle `include`s) and their packages; approximate size
   (`git ls-files | wc -l`); generated/vendored directories.
-- **Commands** (run each one; broken ones get fixed or discarded): test, lint,
+- **Commands** (run each one; broken ones are flagged here and fixed via the step-4
+  proposal, or discarded): test, lint,
   typecheck/analyze, format, build, dev/run, migrations, codegen. Sources: manifest scripts,
   Makefile/Taskfile/justfile, CI workflows.
 - **Conventions**: sample 2–3 recently-active feature areas (`git log --stat`) and record
@@ -45,7 +47,9 @@ Hard rules:
   nested `CLAUDE.md` files in subdirectories.
 - **Ecosystem**: `claude plugin marketplace list` (is `gaston-plugins` or another relevant
   marketplace registered?), `claude plugin list`, `claude mcp list`.
-- **Docs**: README/ARCHITECTURE/CONTRIBUTING — point to them, never duplicate them.
+- **Docs**: README/ARCHITECTURE/CONTRIBUTING — read them; config points to them, never
+  duplicates them into CLAUDE.md. Diff the README against the skeleton in
+  `references/templates.md`: missing sections and commands proven wrong become step-3 work.
 
 ## 2. Audit the existing config (skip when there is none)
 
@@ -83,12 +87,39 @@ one. Skeletons for every block: `references/templates.md` (read it before writin
 
 | Block | Contents | Budget |
 |---|---|---|
-| `CLAUDE.md` (root) | identity, layout map, verified commands, hard rules, maintenance block | ≤ ~60 lines |
+| `CLAUDE.md` (root) | identity, layout map, verified commands, hard rules, engineering standards, maintenance block | ≤ ~60 lines |
+| `README.md` | human usage docs: always created for new projects, non-destructively updated for existing ones | not context-loaded — thorough beats terse |
 | `.claude/rules/<topic>.md` | per-language/area conventions derived from observed code, `paths:`-scoped | ≤ ~40 lines each |
 | `.claude/settings.json` | `enabledPlugins`, `permissions.allow` for the verified routine commands, `permissions.deny` for secrets + generated/vendored reads | — |
 | `.claude/skills/<name>/` | repeated procedures found in step 1, as done HERE | on demand |
 | Hooks | only for guarantees with a deterministic tool behind them (e.g. formatter configured) | zero context |
 | `CLAUDE.local.md`, `.claude/settings.local.json` | personal-only bits found in the audit; must be gitignored | — |
+
+CLAUDE.md always includes the engineering-standards block from `references/templates.md`,
+minus lines this repo's own config files already cover (never counting anyone's `~/.claude`).
+
+### README (always)
+
+Creating or configuring a project ALWAYS produces or updates `README.md` (skeleton in
+`references/templates.md`; drop speculative sections). Existing README: fill gaps and fix
+commands proven wrong in step 1 — never delete or rewrite the user's prose; every change
+appears in the step-4 proposal. Language: match the existing docs; brand-new projects
+default to English unless the user chooses otherwise ("Ask before proposing"). README
+`Commands` and CLAUDE.md `## Commands` mirror the runner entries — one source of truth.
+
+### Command runner (canonical per stack)
+
+| Stack | Runner | Standard entries |
+|---|---|---|
+| Node family (NestJS/Next.js/RN/TS) | `package.json` scripts | `dev` `build` `test` `test:e2e` `lint` `typecheck` |
+| Go | `Makefile` | `run` `build` `test` `lint` `generate` |
+| .NET | `dotnet` CLI verbs (native — don't wrap); compound workflows (migrations, infra-up, seed) → `Makefile` or `scripts/*.ps1` (ask) | — |
+| Android | Gradle tasks (already native) | — |
+| Flutter | `Makefile` (single app) / melos scripts (when `melos.yaml` exists) | `run` `test` `analyze` `build` `gen` |
+
+When verified commands are scattered (CI-only, docs-only, raw multi-flag invocations) or
+missing standard names, propose consolidating them into the runner (step-4 approval):
+reuse existing names, add missing ones, never rename ones that work.
 
 Plugin mapping when `gaston-plugins` is registered: NestJS → `nestjs` + `api-design` ·
 Go service → `go` · Android → `android-kotlin` · Next.js → `react-nextjs` · Flutter →
@@ -113,6 +144,16 @@ New/empty project: same blocks, but conventions come from the chosen stack's plu
 user's template repo (ask which if unclear); the config states the intended architecture so
 the very first sessions build it consistently.
 
+### Ask before proposing (batched, one message)
+
+Only questions detection cannot answer — skip any the repo already answers:
+- Backend HTTP service without OpenAPI → offer OpenAPI/Swagger. If accepted, configure it
+  fully per the stack plugin (nestjs `api-conventions` · dotnet `architecture` · go
+  `tooling`); record the docs URL in the README and spec-generation in the runner.
+- Deployment target not detectable → README `Deployment` section.
+- Brand-new project → README language.
+- .NET only → unix-first (`Makefile`) or Windows-first (`scripts/*.ps1`) team.
+
 ## 4. Propose, then apply
 
 Present one compact plan: per file — create / keep / tighten / move / retire, each with a
@@ -123,6 +164,9 @@ approved.
 ## 5. Verify
 
 - Re-run every documented command; every mentioned path exists.
+- README commands match the runner entries and each one ran in step 1; every README path
+  and link exists.
+- The engineering-standards block is present in the generated CLAUDE.md.
 - `wc -l` per file within budget; report total always-loaded lines (CLAUDE.md + unscoped
   rules) before vs after.
 - `.gitignore` covers `CLAUDE.local.md`, `.claude/settings.local.json` and secret files.
@@ -160,6 +204,6 @@ reality and propose only the delta.
 
 ## 7. Report
 
-In the user's language: files created/changed with line counts, what was preserved from the
-pre-existing config, plugins enabled, each verified command with its real result, and the
-always-loaded context total vs before.
+In the user's language: files created/changed with line counts, README created/updated
+(which sections), what was preserved from the pre-existing config, plugins enabled, each
+verified command with its real result, and the always-loaded context total vs before.
