@@ -31,6 +31,7 @@ All error responses share one shape, produced by a single global exception filte
 - Response envelope: `{ "data": [...], "meta": { "nextCursor": ... } }`.
 
 ## OpenAPI
+- Bootstrap once in `main.ts` via `SwaggerModule`/`DocumentBuilder` serving `/docs` (disabled or auth-gated in prod); verify the current `@nestjs/swagger` setup via `/research` when adding it.
 - Every endpoint gets `@ApiOperation` + `@ApiResponse` for each status it can return; DTOs get `@ApiProperty` (use the swagger CLI plugin to infer where possible).
 - Group with `@ApiTags(<feature>)`. Auth-protected endpoints declare `@ApiBearerAuth()`.
 - The spec is generated, never hand-edited; treat drift between code and spec as a bug.

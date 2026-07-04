@@ -25,3 +25,4 @@ description: React/Next.js testing conventions — Vitest + Testing Library for 
 
 ## Commands
 - `pnpm test` (or `npm test`) for unit/component; `pnpm exec playwright test` for e2e; always also run `pnpm lint` and `pnpm typecheck` before declaring done and report real results.
+- All repo commands live in `package.json` scripts with standard names (`dev` `build` `test` `test:e2e` `lint` `typecheck`) — add new ones there, never as prose in docs.

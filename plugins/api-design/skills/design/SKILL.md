@@ -1,6 +1,6 @@
 ---
 name: design
-description: API design decisions — REST vs GraphQL vs gRPC choice, resource modeling, versioning, pagination, error shapes and idempotency. Use when designing new API surfaces or endpoints in any stack.
+description: API design decisions — REST vs GraphQL vs gRPC choice, resource modeling, versioning, pagination, error shapes, idempotency and OpenAPI documentation. Use when designing new API surfaces or endpoints in any stack.
 ---
 
 # API design
@@ -29,3 +29,9 @@ description: API design decisions — REST vs GraphQL vs gRPC choice, resource m
 
 ## Idempotency
 - All writes that a client may retry (payments, order creation) accept `Idempotency-Key`; store key→result and replay the stored response on retry. PUT/DELETE are idempotent by design; POST needs the key.
+
+## Documentation
+- Every HTTP API ships a generated OpenAPI spec; code↔spec drift is a bug.
+- When creating or configuring a backend service without one, ask the user once whether to
+  configure OpenAPI/Swagger, then set it up fully per the stack plugin (nestjs
+  `api-conventions` · dotnet `architecture` · go `tooling`).

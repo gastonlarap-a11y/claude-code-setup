@@ -31,3 +31,6 @@ description: .NET testing conventions — xUnit v3 unit tests, WebApplicationFac
 - Full suite + coverage before declaring done:
   `dotnet test --collect:"XPlat Code Coverage"`.
 - CI parity: same containers via Testcontainers — no "works locally, mocks in CI" split.
+- The `dotnet` CLI is the runner for standard verbs (build/test/run); compound workflows
+  (migrations, infra-up, seed) live in the repo's `Makefile` or `scripts/*.ps1` — check
+  README/CLAUDE.md.

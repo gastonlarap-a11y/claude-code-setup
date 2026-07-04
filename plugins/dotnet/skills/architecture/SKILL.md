@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: ASP.NET Core project architecture on .NET 10 LTS / C# 14 — minimal APIs vs controllers, dependency injection, options pattern, vertical-slice layout and error handling. Use when creating or restructuring any C#/.NET service, endpoint, or project, and when answering how a .NET solution should be organized.
+description: ASP.NET Core project architecture on .NET 10 LTS / C# 14 — minimal APIs vs controllers, dependency injection, options pattern, vertical-slice layout, error handling and OpenAPI documentation. Use when creating or restructuring any C#/.NET service, endpoint, or project, and when answering how a .NET solution should be organized or documented.
 ---
 
 # .NET architecture (.NET 10 LTS, C# 14)
@@ -32,6 +32,14 @@ description: ASP.NET Core project architecture on .NET 10 LTS / C# 14 — minima
 ## Async
 - Async all the way down — no `.Result`/`.Wait()` (deadlocks + thread starvation);
   `CancellationToken` accepted and forwarded in every I/O path (endpoints get it free).
+
+## API documentation (OpenAPI)
+- Built-in `Microsoft.AspNetCore.OpenApi`: `AddOpenApi()` + `MapOpenApi()` generate the
+  document — Swagger UI no longer ships in templates; interactive UI via `Scalar.AspNetCore`,
+  mapped in Development only.
+- Enrich minimal-API groups with `WithSummary`/`WithTags`/`Produces<T>` so the spec stays
+  useful; the spec is generated, never hand-edited — code↔spec drift is a bug.
+- Verify exact packages and current idiom via `/research` before wiring it.
 
 ## Local orchestration & learning
 [references/aspire.md](references/aspire.md) — Aspire AppHost for local SQL Server/Redis

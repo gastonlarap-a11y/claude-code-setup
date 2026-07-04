@@ -24,6 +24,11 @@ Everything in English. `<angle brackets>` mark what to replace.
 - <hard project rule derived from the codebase, e.g. "route handlers never touch the DB; use src/db repositories">
 - <max ~6 bullets; per-language style goes to .claude/rules/, procedures go to .claude/skills/>
 
+## Engineering standards
+- Every feature ships with its tests. Run <lint> + <typecheck> + <test> before declaring work done; report real results.
+- Handle errors explicitly at boundaries; never swallow exceptions or ignored error returns.
+- No speculative abstractions: introduce a pattern only for a problem this repo has, and say which and why.
+
 ## Config maintenance
 <paste the maintenance block from SKILL.md step 6>
 ```
@@ -46,11 +51,77 @@ directory, not the root<adjust if the repo uses root-level task runners>.
 <repo-wide rules only: commit style, cross-package rules. Per-package detail goes in
 packages/<name>/CLAUDE.md>
 
+## Engineering standards
+<same block as the single-package skeleton — repo-wide, include at root only>
+
 ## Config maintenance
 <maintenance block>
 ```
 
 Per-package `CLAUDE.md`: same shape as the single-package skeleton, minus repo-wide rules.
+
+## README.md (human usage docs)
+
+Not context-loaded — thorough beats terse. Always created for new projects; existing
+READMEs are updated non-destructively: merge missing sections, fix commands proven wrong
+in step 1, never rewrite the user's prose. Language: match the existing docs; brand-new
+projects default to English unless the user chose otherwise. Delete speculative sections.
+
+````markdown
+# <project-name>
+
+<One paragraph: what this does, for whom, and the stack.>
+
+## Prerequisites
+- <tool + version taken from lockfiles/configs, e.g. "Node 22 (see .nvmrc)">
+
+## Setup
+```bash
+<install dependencies>
+<copy env: cp .env.example .env — list the required variables>
+<db setup / migrations — delete if none>
+```
+
+## Commands
+| Command | What it does |
+|---|---|
+| `<runner entry>` | <one line> |
+<mirror the runner exactly — every entry, nothing else>
+
+## Project structure
+- `<dir>/` — <what lives there; only non-obvious directories>
+
+## API documentation
+<only if configured: docs URL (e.g. /docs) and how the spec is generated>
+
+## Deployment
+<only if known: where it deploys and how>
+````
+
+## Makefile (Go · Flutter single-app · .NET compound workflows, unix-first)
+
+Targets map 1:1 to the verified commands from step 1; delete targets with nothing behind
+them. Windows-first .NET teams get `scripts/*.ps1` with the same names instead.
+
+```makefile
+.PHONY: run build test lint generate
+
+run:
+	<verified dev/run command>
+build:
+	<verified build command>
+test:
+	<verified test command>
+lint:
+	<verified lint command>
+generate:
+	<verified codegen command>
+```
+
+## package.json scripts (Node family)
+
+Standard names: `dev` `build` `test` `test:e2e` `lint` `typecheck` — each mapping to the
+verified command. Add the missing ones; never rename existing scripts that work.
 
 ## .claude/settings.json
 

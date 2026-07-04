@@ -108,7 +108,11 @@ sin aprobar la propuesta; todo comando documentado fue ejecutado; presupuestos d
 `CLAUDE.md` del proyecto: si un comando documentado falla, una convención contradice el
 código o corriges lo mismo dos veces, el agente propone el fix de config en esa misma
 sesión. Re-correr `/setup-project` sobre un proyecto ya configurado = re-auditoría (solo
-propone el delta).
+propone el delta). Además: **README obligatorio** al crear/configurar (actualización no
+destructiva si ya existe); comandos consolidados en el **runner canónico del stack**
+(package.json scripts, Makefile, Gradle, dotnet CLI); pregunta de **OpenAPI/Swagger** al
+detectar un backend HTTP; y bloque de **estándares de ingeniería** (tests + verificación
+antes de declarar done) en el `CLAUDE.md` generado.
 
 **Costo real**: la config siempre-cargada queda mínima (decenas de líneas); el conocimiento
 pesado vive en plugins/skills/rules que cargan solo al usarse. El ahorro (cero vueltas en

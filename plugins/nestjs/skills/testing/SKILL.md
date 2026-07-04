@@ -24,3 +24,4 @@ description: NestJS testing conventions — Jest unit tests, e2e tests via the F
 - Every service method: happy path + each error branch.
 - Every controller: validation rejection (400), auth guard (401/403), not-found (404).
 - Run `npm test` (or `pnpm test`) before declaring done and report the real output.
+- All repo commands live in `package.json` scripts with standard names (`dev` `build` `test` `test:e2e` `lint` `typecheck`) — add new ones there, never as prose in docs.
