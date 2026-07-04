@@ -42,10 +42,13 @@ This does, idempotently:
 1. Copies `global/CLAUDE.md`, `global/settings.json`, `global/skills/`, `global/agents/`,
    `global/hooks/`, `global/rules/` and `global/statusline.sh` into `~/.claude/` and marks
    scripts executable.
-2. Sources `secrets.env` and writes the keys into the `env` block of
-   `~/.claude/settings.local.json` (machine-local, never committed anywhere).
-3. Registers the `context7` MCP server at user scope (`claude mcp add-json`), whose config
-   references `${CONTEXT7_API_KEY}` — resolved from the env block above.
+2. Sources `secrets.env` and injects `CONTEXT7_API_KEY` directly into the `context7` MCP
+   registration at user scope (`~/.claude.json` — machine-local, never committed). Without
+   secrets, context7 registers keyless (lower rate limits) and `/doctor` stays clean.
+   Note: a user-level `settings.local.json` env block is NOT read by Claude Code — the
+   `${VAR}` placeholders in MCP configs expand from the process environment only.
+3. (Re-)registers `context7` (`claude mcp remove` + `add-json`), so key/config updates
+   take effect on re-runs.
 4. Registers this repo as the `gaston-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
 5. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 7 stack

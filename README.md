@@ -42,7 +42,7 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil) — con `references/` que cargan solo si hacen falta |
 | `plugins.txt` / `install.sh` / `install.ps1` | Instalador (bash y PowerShell nativo) | Idempotente: copia config, registra marketplace, instala plugins. `install.ps1` = Windows sin Git Bash |
 | `.github/workflows/validate.yml` + `scripts/check-versions.sh` | CI del repo | En cada push: JSON lint, paridad de versiones marketplace↔plugin (regla dual-bump), shellcheck y `claude plugin validate --strict` |
-| `secrets.env(.example)` | Keys reales (gitignored) / plantilla | `install.sh` las inyecta en `~/.claude/settings.local.json` |
+| `secrets.env(.example)` | Keys reales (gitignored) / plantilla | Los installers las inyectan directo en el registro MCP a nivel usuario (`~/.claude.json`, jamás commiteado) |
 | `START.md` | Bootstrap interactivo para agentes | Punto de entrada único: detecta el entorno, entrevista al usuario y enruta a la guía correcta (global, proyecto o ambos; owner o tercero; incluye Windows) |
 | `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración de MI máquina (sobreescribe `~/.claude/`) + verificación |
 | `AGENT-PROJECT-SETUP.md` | Guía en inglés para agentes | Configurar el proyecto de CUALQUIER persona usando este directorio, sin tocar su config global |

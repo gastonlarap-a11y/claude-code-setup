@@ -29,47 +29,52 @@ command -v jq >/dev/null 2>&1 \
 # Any Python works for the JSON merges below; python3 is not a given on Windows/Git Bash.
 PY="$(command -v python3 || command -v python || command -v py || true)"
 
-# --- Secrets -> ~/.claude/settings.local.json (env block, machine-local) ----
-if [ -f "$SRC/secrets.env" ] && [ -n "$PY" ]; then
+# --- Secrets -------------------------------------------------------------------
+# secrets.env is sourced here and injected directly into the MCP registration
+# below (~/.claude.json, machine-local, never committed). Note: a user-level
+# settings.local.json is NOT read by Claude Code (only project-level is) — never
+# rely on an env block there.
+if [ -f "$SRC/secrets.env" ]; then
   # shellcheck disable=SC1091
   source "$SRC/secrets.env"
-  "$PY" - "$DEST/settings.local.json" <<'PYEOF'
-import json, os, sys
-path = sys.argv[1]
-data = {}
-if os.path.exists(path):
-    try:
-        data = json.load(open(path))
-    except Exception:
-        data = {}
-env = data.setdefault("env", {})
-key = os.environ.get("CONTEXT7_API_KEY", "")
-if key:
-    env["CONTEXT7_API_KEY"] = key
-with open(path, "w") as f:
-    json.dump(data, f, indent=2)
-print("  settings.local.json: secrets applied")
-PYEOF
-elif [ ! -f "$SRC/secrets.env" ]; then
-  echo "  WARNING: secrets.env not found — copy secrets.env.example to secrets.env and re-run."
 else
-  echo "  WARNING: no python found — add the keys from secrets.env to the \"env\" block of $DEST/settings.local.json manually."
+  echo "  WARNING: secrets.env not found — context7 will be registered keyless (lower rate limits)."
+  echo "           Copy secrets.env.example to secrets.env and re-run to add the key."
 fi
 
 # --- MCP servers (user scope) + plugins --------------------------------------
 if command -v claude >/dev/null 2>&1; then
+  key="${CONTEXT7_API_KEY:-}"
   if command -v jq >/dev/null 2>&1; then
-    ctx7_json="$(jq -c '.mcpServers.context7' "$SRC/global/mcp-servers.json")"
+    ctx7_json="$(jq -c --arg k "$key" \
+      '.mcpServers.context7 | if $k != "" then .env.CONTEXT7_API_KEY = $k else del(.env) end' \
+      "$SRC/global/mcp-servers.json")"
   elif [ -n "$PY" ]; then
-    ctx7_json="$("$PY" -c "import json;d=json.load(open('$SRC/global/mcp-servers.json'));print(json.dumps(d['mcpServers']['context7']))")"
+    ctx7_json="$(CTX7_KEY="$key" "$PY" -c "
+import json, os
+d = json.load(open('$SRC/global/mcp-servers.json'))['mcpServers']['context7']
+k = os.environ.get('CTX7_KEY', '')
+if k:
+    d.setdefault('env', {})['CONTEXT7_API_KEY'] = k
+else:
+    d.pop('env', None)
+print(json.dumps(d))")"
   else
     ctx7_json=""
-    echo "  WARNING: neither jq nor python found — register context7 manually: claude mcp add-json context7 '<json from global/mcp-servers.json>' --scope user"
+    echo "  WARNING: neither jq nor python found — register context7 manually: claude mcp add-json context7 '<json from global/mcp-servers.json, with your real key in env>' --scope user"
   fi
   if [ -n "$ctx7_json" ]; then
-    claude mcp add-json context7 "$ctx7_json" --scope user 2>/dev/null \
-      && echo "  MCP: context7 registered (user scope)" \
-      || echo "  MCP: context7 already exists or CLI refused — check with 'claude mcp list'"
+    # Remove-then-add so config/key updates take effect (add-json fails if it exists).
+    claude mcp remove context7 --scope user >/dev/null 2>&1 || true
+    if claude mcp add-json context7 "$ctx7_json" --scope user 2>/dev/null; then
+      if [ -n "$key" ]; then
+        echo "  MCP: context7 registered (user scope, with API key)"
+      else
+        echo "  MCP: context7 registered (user scope, keyless — lower rate limits)"
+      fi
+    else
+      echo "  MCP: context7 registration failed — check with 'claude mcp list'"
+    fi
   fi
 
   # Personal marketplace (this repo) — register or refresh, idempotent.
