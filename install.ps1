@@ -25,46 +25,43 @@ if (-not (Get-Command bash -ErrorAction SilentlyContinue)) {
         'They activate if you install Git for Windows (optional): winget install --id Git.Git -e')
 }
 
-# --- Secrets -> ~/.claude/settings.local.json (env block, machine-local) ----
+# --- Secrets -----------------------------------------------------------------
+# secrets.env is parsed here and injected directly into the MCP registration
+# below (~/.claude.json, machine-local, never committed). Note: a user-level
+# settings.local.json is NOT read by Claude Code (only project-level is) — never
+# rely on an env block there.
+$secrets = @{}
 $SecretsFile = Join-Path $Src 'secrets.env'
 if (Test-Path $SecretsFile) {
-    $secrets = @{}
     foreach ($line in Get-Content $SecretsFile) {
         if ($line -match '^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$') {
             $secrets[$Matches[1]] = $Matches[2].Trim().Trim('"').Trim("'")
         }
     }
-    $LocalPath = Join-Path $Dest 'settings.local.json'
-    $local = $null
-    if (Test-Path $LocalPath) {
-        try { $local = Get-Content $LocalPath -Raw | ConvertFrom-Json } catch { $local = $null }
-    }
-    if ($null -eq $local) { $local = New-Object PSObject }
-    if (-not ($local.PSObject.Properties.Name -contains 'env')) {
-        $local | Add-Member -MemberType NoteProperty -Name 'env' -Value (New-Object PSObject)
-    }
-    foreach ($k in $secrets.Keys) {
-        if (-not $secrets[$k]) { continue }
-        if ($local.env.PSObject.Properties.Name -contains $k) { $local.env.$k = $secrets[$k] }
-        else { $local.env | Add-Member -MemberType NoteProperty -Name $k -Value $secrets[$k] }
-    }
-    $json = $local | ConvertTo-Json -Depth 10
-    # WriteAllText without BOM: PS 5.1's Set-Content -Encoding UTF8 adds one, breaking JSON parsers.
-    [System.IO.File]::WriteAllText($LocalPath, $json, (New-Object System.Text.UTF8Encoding($false)))
-    Write-Host '  settings.local.json: secrets applied'
 } else {
-    Write-Warning 'secrets.env not found - copy secrets.env.example to secrets.env and re-run.'
+    Write-Warning ('secrets.env not found - context7 will be registered keyless (lower rate limits). ' +
+        'Copy secrets.env.example to secrets.env and re-run to add the key.')
 }
 
 # --- MCP servers (user scope) + marketplace + plugins ------------------------
 if (Get-Command claude -ErrorAction SilentlyContinue) {
     $mcp = Get-Content (Join-Path $Src 'global/mcp-servers.json') -Raw | ConvertFrom-Json
-    $ctx7 = $mcp.mcpServers.context7 | ConvertTo-Json -Depth 10 -Compress
+    $ctx7obj = $mcp.mcpServers.context7
+    $key = ''
+    if ($secrets.ContainsKey('CONTEXT7_API_KEY')) { $key = $secrets['CONTEXT7_API_KEY'] }
+    if ($key) { $ctx7obj.env.CONTEXT7_API_KEY = $key }
+    else { $ctx7obj.PSObject.Properties.Remove('env') }
+    $ctx7 = $ctx7obj | ConvertTo-Json -Depth 10 -Compress
     # PS 5.1 does not escape embedded quotes when passing args to native commands.
     $ctx7Arg = $ctx7 -replace '"', '\"'
+    # Remove-then-add so config/key updates take effect (add-json fails if it exists).
+    claude mcp remove context7 --scope user 2>&1 | Out-Null
     claude mcp add-json context7 $ctx7Arg --scope user 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) { Write-Host '  MCP: context7 registered (user scope)' }
-    else { Write-Host "  MCP: context7 already exists or CLI refused - check with 'claude mcp list'" }
+    if ($LASTEXITCODE -eq 0) {
+        if ($key) { Write-Host '  MCP: context7 registered (user scope, with API key)' }
+        else { Write-Host '  MCP: context7 registered (user scope, keyless - lower rate limits)' }
+    }
+    else { Write-Host "  MCP: context7 registration failed - check with 'claude mcp list'" }
 
     # Personal marketplace (this repo) - register or refresh, idempotent.
     claude plugin marketplace add $Src 2>&1 | Out-Null
