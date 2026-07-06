@@ -32,6 +32,12 @@ Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android
 - Conventional Commits style: `feat|fix|refactor|test|chore(scope): message`.
 - Never commit secrets; `.env*` and `secrets*` files stay out of git.
 - Never push directly to `main`; never `git push --force` unless I explicitly ask.
+- **Post-merge cleanup (automatic)**: remotes auto-delete branches on PR merge. When I confirm
+  a merge or a local branch shows `[gone]` upstream, first verify with
+  `gh pr view <branch> --json state` (or `az repos pr show`) that state is MERGED, then clean
+  up without asking: `git checkout main && git pull && git fetch --prune`, delete the local
+  branch (`git branch -D` — safe only because the merge was verified), and start the next work
+  from a fresh branch off main.
 
 # Compact instructions
 When compacting, preserve: the list of modified files, the exact build/test commands used and their latest results, key architectural decisions made this session, and any unresolved errors or pending steps.

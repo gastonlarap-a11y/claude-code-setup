@@ -1,9 +1,12 @@
 ---
 name: architecture
-description: Decision framework for architecture and design patterns — choosing between vertical slices, layered, hexagonal, or modular monolith; when a design pattern earns its place; scalability and readability criteria. Use when starting a project, restructuring modules, or justifying a pattern choice.
+description: Decision framework for architecture and design patterns — choosing between vertical slices, layered, hexagonal, or modular monolith; when a design pattern earns its place; scalability and readability criteria; per-project-type principles catalog with applicability signals (used by setup-project). Use when starting a project, restructuring modules, justifying a pattern choice, or selecting which architecture principles apply to a given project.
 ---
 
 # Architecture decision framework
+
+Per-project-type principle selection (adopt/propose/discard protocol, applicability signals,
+enforcement tooling): `references/principles-catalog.md`.
 
 ## First principles
 - Architecture exists so the NEXT person (or me in 6 months) can find and change things safely. Optimize for locality of reference and low coupling, not for pattern purity.

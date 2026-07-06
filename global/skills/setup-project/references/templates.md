@@ -24,6 +24,11 @@ Everything in English. `<angle brackets>` mark what to replace.
 - <hard project rule derived from the codebase, e.g. "route handlers never touch the DB; use src/db repositories">
 - <max ~6 bullets; per-language style goes to .claude/rules/, procedures go to .claude/skills/>
 
+## Architecture
+- <principle that survived the step-3 selection, stated as a verifiable repo rule naming
+  real directories, e.g. "dependency direction is src → libs, never back">
+- <max ~6 bullets; delete this section if no principle survived selection>
+
 ## Engineering standards
 - Every feature ships with its tests. Run <lint> + <typecheck> + <test> before declaring work done; report real results.
 - Handle errors explicitly at boundaries; never swallow exceptions or ignored error returns.
@@ -97,6 +102,25 @@ projects default to English unless the user chose otherwise. Delete speculative 
 ## Deployment
 <only if known: where it deploys and how>
 ````
+
+## ARCHITECTURE.md (only when approved in step 4)
+
+Offered only when non-obvious structural decisions need their why recorded; never created
+without approval. Not context-loaded — CLAUDE.md/README may point to it. One entry per
+non-obvious decision, appended over time.
+
+```markdown
+# Architecture
+
+<Chosen structure in one paragraph: what and why, e.g. "Vertical slices under src/features/;
+each operation owns handler + types + tests. Chosen because operations are the unit of
+change here.">
+
+Rejected: <alternative and the one-line reason it lost>.
+
+## Decisions
+- <date> — <decision>: <why, and what was rejected>
+```
 
 ## Makefile (Go · Flutter single-app · .NET compound workflows, unix-first)
 

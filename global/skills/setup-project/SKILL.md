@@ -41,6 +41,10 @@ Hard rules:
 - **Conventions**: sample 2–3 recently-active feature areas (`git log --stat`) and record
   observed patterns: layout, naming, error handling, test placement/style, DI, state
   management. In legacy projects these observations OUTRANK generic best practices.
+- **Architecture**: classify the project type(s) (api-service, ui-web, mobile-app,
+  library-sdk, cli, worker-pipeline, monorepo-mixed) and record the structure already
+  present: top-level areas, import/dependency direction, where domain logic vs transport/IO
+  lives. Feeds the step-3 principle selection.
 - **Existing AI config** (full inventory): `CLAUDE.md`, `CLAUDE.local.md`, `.claude/**`
   (settings, rules, skills, hooks, agents, commands), `AGENTS.md`, `.cursorrules`,
   `.cursor/rules/`, `.windsurfrules`, `.github/copilot-instructions.md`, `.mcp.json`,
@@ -98,7 +102,18 @@ one. Skeletons for every block: `references/templates.md` (read it before writin
 CLAUDE.md always includes the engineering-standards block from `references/templates.md`,
 minus lines this repo's own config files already cover (never counting anyone's `~/.claude`).
 
-### README (always)
+### Architecture principles (selective, auditable)
+
+Run the selection protocol in the `architecture` skill's `references/principles-catalog.md`
+against the step-1 classification: grade each candidate principle `adopt` (code already
+follows it → verifiable repo rule) / `propose` (high-value gap, user decides) / `discard`
+(one-line reason). Any subset is valid, including none. Every kept principle is rewritten
+naming this repo's real directories/modules — never a bare principle name. Destination:
+`## Architecture` block in root CLAUDE.md (3–6 bullets, inside the budget) or a
+`paths:`-scoped `.claude/rules/architecture.md`; where the catalog lists an enforcement tool
+for the stack, offer the executable rule too. `ARCHITECTURE.md` (skeleton in
+`references/templates.md`) is offered ONLY when non-obvious structural decisions need their
+why recorded — never created without step-4 approval.
 
 Creating or configuring a project ALWAYS produces or updates `README.md` (skeleton in
 `references/templates.md`; drop speculative sections). Existing README: fill gaps and fix
@@ -162,7 +177,9 @@ Only questions detection cannot answer — skip any the repo already answers:
 
 Present one compact plan: per file — create / keep / tighten / move / retire, each with a
 one-line reason, plus before/after line counts of always-loaded content (that difference is
-the per-session token cost). Get approval; adjust if redirected. Then write exactly what was
+the per-session token cost). Include the architecture-principle selection as its own list:
+adopted / proposed / discarded, one-line reason each — the user edits this selection before
+anything is written. Get approval; adjust if redirected. Then write exactly what was
 approved.
 
 ## 5. Verify
@@ -171,6 +188,8 @@ approved.
 - README commands match the runner entries and each one ran in step 1; every README path
   and link exists.
 - The engineering-standards block is present in the generated CLAUDE.md.
+- Each documented architecture principle spot-checks true against the code today; if an
+  enforcement rule was approved, its command runs and passes.
 - `wc -l` per file within budget; report total always-loaded lines (CLAUDE.md + unscoped
   rules) before vs after.
 - `.gitignore` covers `CLAUDE.local.md`, `.claude/settings.local.json` and secret files.
@@ -205,7 +224,8 @@ large-codebases guide). Warn about its cost — it runs on EVERY turn end; the p
 maintenance block above is the recommended default.
 
 Re-running this skill on an already-configured project = re-audit: diff steps 1–2 against
-reality and propose only the delta.
+reality and propose only the delta — including architectural drift: documented principles
+the code no longer follows are re-graded (re-adopt, amend, or retire), never left stale.
 
 ## 7. Report
 
