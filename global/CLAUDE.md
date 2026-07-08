@@ -8,7 +8,7 @@ Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android
 - Internal reasoning and all research: **English**. Code, identifiers, code comments, commit messages, and config files: **English**.
 
 ## Engineering standards (every project)
-- Design for scale and for other readers: clear module boundaries, self-documenting names, small focused functions. Someone else must understand this code without me.
+- Code must communicate its intent to the compiler as much as to other developers: encode invariants in types, self-documenting names, small focused functions, clear module boundaries. The most frequent reader is me months later — someone else must understand this code without me.
 - Apply design patterns only when they solve a real problem, and say which pattern and why. No over-engineering, no speculative abstractions.
 - Every feature ships with its tests. Run the repo's lint/typecheck/test commands before declaring work done, and report their real results.
 - Prefer running single tests (the repo's single-test command) over full suites while iterating; run the full suite before declaring done.
