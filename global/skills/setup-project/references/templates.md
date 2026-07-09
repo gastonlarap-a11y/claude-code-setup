@@ -3,7 +3,7 @@
 Fill only with verified facts (step 1). Delete any section that would be speculative.
 Everything in English. `<angle brackets>` mark what to replace.
 
-## Root CLAUDE.md — single-package repo
+## Root AGENTS.md — single-package repo (canonical, cross-agent)
 
 ```markdown
 # <project-name>
@@ -33,15 +33,23 @@ Everything in English. `<angle brackets>` mark what to replace.
 - Every feature ships with its tests. Run <lint> + <typecheck> + <test> before declaring work done; report real results.
 - Handle errors explicitly at boundaries; never swallow exceptions or ignored error returns.
 - No speculative abstractions: introduce a pattern only for a problem this repo has, and say which and why.
+```
+
+## Root CLAUDE.md — thin shim (fresh configs)
+
+```markdown
+@AGENTS.md
 
 ## Config maintenance
 <paste the maintenance block from SKILL.md step 6>
 ```
 
-If `AGENTS.md` exists, the file starts with `@AGENTS.md` and contains only Claude-specific
-deltas below it — no duplicated content.
+Existing CLAUDE.md-only project: keep CLAUDE.md canonical — it carries the AGENTS.md
+skeleton's content directly (as before) and the split is only offered in step 4.
+`AGENTS.md` already present in the repo → same thin CLAUDE.md: `@AGENTS.md` first,
+Claude-specific deltas below it — no duplicated content.
 
-## Root CLAUDE.md — monorepo (orientation only)
+## Root AGENTS.md — monorepo (orientation only)
 
 ```markdown
 # <monorepo-name>
@@ -58,12 +66,11 @@ packages/<name>/CLAUDE.md>
 
 ## Engineering standards
 <same block as the single-package skeleton — repo-wide, include at root only>
-
-## Config maintenance
-<maintenance block>
 ```
 
-Per-package `CLAUDE.md`: same shape as the single-package skeleton, minus repo-wide rules.
+The root thin `CLAUDE.md` (shim above) carries the `## Config maintenance` block.
+Per-package: same split as the single-package skeleton (AGENTS.md content + thin
+CLAUDE.md), minus repo-wide rules.
 
 ## README.md (human usage docs)
 

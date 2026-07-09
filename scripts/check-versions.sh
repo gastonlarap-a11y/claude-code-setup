@@ -40,7 +40,26 @@ while IFS= read -r line; do
   esac
 done < plugins.txt
 
+# enabledPlugins <-> marketplace sync (global/settings.json): every marketplace plugin
+# needs an explicit entry there (installed-but-disabled defaults), and every
+# @gaston-plugins key there must exist in the marketplace.
+settings="global/settings.json"
+while IFS= read -r name; do
+  if ! jq -e --arg k "${name}@gaston-plugins" '.enabledPlugins | has($k)' "$settings" >/dev/null; then
+    echo "FAIL: marketplace plugin '$name' has no enabledPlugins entry in $settings"
+    fail=1
+  fi
+done < <(jq -r '.plugins[].name' "$marketplace")
+
+while IFS= read -r key; do
+  name="${key%@gaston-plugins}"
+  if ! jq -e --arg n "$name" '.plugins[] | select(.name == $n)' "$marketplace" >/dev/null; then
+    echo "FAIL: $settings enables '$key' but the marketplace has no plugin named '$name'"
+    fail=1
+  fi
+done < <(jq -r '.enabledPlugins | keys[] | select(endswith("@gaston-plugins"))' "$settings")
+
 if [ "$fail" -eq 0 ]; then
-  echo "OK: marketplace, plugin manifests and plugins.txt are consistent"
+  echo "OK: marketplace, plugin manifests, plugins.txt and settings enabledPlugins are consistent"
 fi
 exit "$fail"

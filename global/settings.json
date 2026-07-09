@@ -138,12 +138,12 @@
     "react-nextjs@gaston-plugins": false,
     "flutter@gaston-plugins": false,
     "react-native@gaston-plugins": false,
+    "dotnet@gaston-plugins": false,
     "api-design@gaston-plugins": false,
     "bots@gaston-plugins": false,
     "realtime@gaston-plugins": false,
     "background-jobs@gaston-plugins": false,
-    "ux@gaston-plugins": false,
-    "dotnet@gaston-plugins": false
+    "ux@gaston-plugins": false
   },
   "effortLevel": "high",
   "theme": "dark"
