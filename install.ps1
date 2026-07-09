@@ -1,9 +1,9 @@
-# Restores the Claude Code global configuration from this directory — native Windows port
+# Restores the Claude Code global configuration from this directory - native Windows port
 # of install.sh (PowerShell 5.1+, no Git Bash required). Safe to re-run: it overwrites
 # ~/.claude config files with the versions here.
 # OWNER-ONLY: this replaces ~/.claude (CLAUDE.md, settings, hooks, statusline) with the
 # owner's personal setup. To configure a single project or use only the plugins, do NOT
-# run this — see AGENT-PROJECT-SETUP.md instead.
+# run this - see AGENT-PROJECT-SETUP.md instead.
 $ErrorActionPreference = 'Continue'
 
 $Src = $PSScriptRoot
@@ -131,7 +131,7 @@ if ($Lang -and $Lang -ne 'spanish') {
 # --- Secrets -----------------------------------------------------------------
 # secrets.env is parsed here and injected directly into the MCP registration
 # below (~/.claude.json, machine-local, never committed). Note: a user-level
-# settings.local.json is NOT read by Claude Code (only project-level is) — never
+# settings.local.json is NOT read by Claude Code (only project-level is) - never
 # rely on an env block there.
 $secrets = @{}
 $SecretsFile = Join-Path $Src 'secrets.env'
@@ -185,7 +185,7 @@ if (Get-Command claude -ErrorAction SilentlyContinue) {
     }
 
     # Stack/domain plugins install disabled: defaultEnabled:false in the manifests
-    # (honored since CLI 2.1.154 — below our documented floor of 2.1.187) plus explicit false entries
+    # (honored since CLI 2.1.154 - below our documented floor of 2.1.187) plus explicit false entries
     # in global/settings.json enabledPlugins. Projects re-enable their own.
     Write-Host '  stack plugins installed globally, disabled by default (enable per project)'
 } else {
