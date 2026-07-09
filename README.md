@@ -40,8 +40,8 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 12 plugins con `defaultEnabled: false` |
 | `plugins/` (stack) | `nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`, `dotnet` | Convenciones de arquitectura/testing/tooling por stack; flutter trae MCP oficial de Dart + LSP de Dart; los móviles traen `recipes`; dotnet trae EF Core + SQL Server local (OrbStack), Aspire, Azure y ruta de aprendizaje |
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil) — con `references/` que cargan solo si hacen falta |
-| `plugins.txt` / `install.sh` / `install.ps1` | Instalador (bash y PowerShell nativo) | Idempotente: copia config, registra marketplace, instala plugins. `install.ps1` = Windows sin Git Bash |
-| `.github/workflows/validate.yml` + `scripts/check-versions.sh` | CI del repo | En cada push: JSON lint, paridad de versiones marketplace↔plugin (regla dual-bump), shellcheck y `claude plugin validate --strict` |
+| `plugins.txt` / `install.sh` / `install.ps1` | Instalador (bash y PowerShell nativo) | Idempotente: respalda lo que va a reemplazar (`~/.claude/.backup-<ts>`, últimos 3), copia config, poda huérfanos vía manifest, aplica `CLAUDE_LANGUAGE`, registra marketplace, instala plugins. `install.ps1` = Windows sin Git Bash |
+| `.github/workflows/*.yml` + `scripts/check-*.sh` | CI del repo | En cada push: JSON lint, paridad de versiones (dual-bump) + sync de `enabledPlugins`, shellcheck, anclas de idioma, lint de PowerShell y `claude plugin validate --strict`; y smoke real de los installers (Linux + Windows PowerShell 5.1) cuando cambian |
 | `secrets.env(.example)` | Keys reales (gitignored) / plantilla | Los installers las inyectan directo en el registro MCP a nivel usuario (`~/.claude.json`, jamás commiteado) |
 | `START.md` | Bootstrap interactivo para agentes | Punto de entrada único: detecta el entorno, entrevista al usuario y enruta a la guía correcta (global, proyecto o ambos; owner o tercero; incluye Windows) |
 | `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración de MI máquina (sobreescribe `~/.claude/`) + verificación |
@@ -73,7 +73,10 @@ El agente detecta el entorno (macOS/Linux/Windows, CLI, secrets), te entrevista 
 lo que no puede detectar (¿owner o tercero? ¿global, proyecto o ambos? ¿máquina personal
 o de empresa?) y ejecuta la ruta correcta: restauración global (`AGENT-INSTALL.md`),
 configuración de proyectos (`AGENT-PROJECT-SETUP.md`), o ambas — sin tocar jamás el
-`~/.claude` de un tercero.
+`~/.claude` de un tercero. La entrevista incluye el **idioma de respuesta**
+(`CLAUDE_LANGUAGE`, persistido por máquina — español por defecto) y, antes de sobrescribir,
+el installer **respalda lo existente** en `~/.claude/.backup-<timestamp>` (últimos 3;
+rollback y desinstalación documentados en `AGENT-INSTALL.md` → "Rollback & uninstall").
 
 > **Windows**: ejecutar Claude Code ya NO requiere Git Bash (desde 2.1.120 usa PowerShell
 > como shell tool si bash no está). Para restaurar la config tienes dos rutas: `install.ps1`
@@ -87,7 +90,9 @@ curl -fsSL https://claude.ai/install.sh | bash   # 1. CLI nativo, auto-actualiza
                                                  #    Windows PowerShell: irm https://claude.ai/install.ps1 | iex
 brew install jq        # 2. statusline — Windows: winget install jqlang.jq / Linux: apt install jq
 cp secrets.env.example secrets.env               # 3. rellena las keys reales
-bash install.sh                                  # 4. restaura todo — Windows nativo: .\install.ps1
+bash install.sh                                  # 4. restaura todo (CLAUDE_LANGUAGE=<idioma> opcional;
+                                                 #    respalda lo previo en ~/.claude/.backup-*)
+                                                 #    Windows nativo: .\install.ps1
 ```
 
 Luego abre una sesión nueva y pasa la [verificación rápida](#verificación-rápida).
@@ -102,16 +107,18 @@ Un solo comando para los tres casos — abre Claude Code en el repo y corre:
 
 | Caso | Qué hace el protocolo |
 |---|---|
-| **Proyecto nuevo** (recién inicializado) | Detecta el stack elegido, pregunta lo ambiguo (template, arquitectura objetivo), habilita los plugins que correspondan y genera `CLAUDE.md` + `.claude/` mínimos que fijan la arquitectura desde la primera sesión |
+| **Proyecto nuevo** (recién inicializado) | Entrevista guiada paso a paso (propósito → stack → arquitectura → deploy/CI → testing), habilita los plugins que correspondan y genera `AGENTS.md` canónico (lo leen también Codex/Cursor/Gemini) + `CLAUDE.md` delgado (`@AGENTS.md`) + `.claude/` mínimos que fijan la arquitectura desde la primera sesión |
 | **Proyecto existente sin config de IA** | Deriva las convenciones DEL código real (módulos recientes, comandos verificados corriéndolos, CI) y las codifica en config token-lean adaptada a ese repo — nunca impone estilo ajeno |
 | **Proyecto con config de IA previa** (CLAUDE.md, AGENTS.md, .cursorrules, .claude/…) | Audita: mantiene lo que sirve, afina lo impreciso, mueve lo mal ubicado (procedimientos → skills, estilo por lenguaje → rules con `paths:`, garantías → permisos/hooks) y muestra TODO cambio antes de aplicarlo — jamás descarta en silencio |
 
 Reglas del protocolo (completo en `global/skills/setup-project/SKILL.md`): nada se escribe
 sin aprobar la propuesta; todo comando documentado fue ejecutado; presupuestos de contexto
-(`CLAUDE.md` raíz ≤ ~60 líneas); y deja un bloque de **auto-mantenimiento** en el
-`CLAUDE.md` del proyecto: si un comando documentado falla, una convención contradice el
-código o corriges lo mismo dos veces, el agente propone el fix de config en esa misma
-sesión. Re-correr `/setup-project` sobre un proyecto ya configurado = re-auditoría (solo
+(archivo canónico raíz ≤ ~60 líneas — `AGENTS.md` en configs nuevas, multi-agente; los
+proyectos con solo `CLAUDE.md` no se migran a la fuerza); y deja un bloque de
+**auto-mantenimiento** en el `CLAUDE.md` del proyecto: tras cualquier tarea que cambie
+estructura/comandos/convenciones — o si un comando documentado falla, una convención
+contradice el código o corriges lo mismo dos veces — el agente propone el fix de config en
+esa misma sesión. Re-correr `/setup-project` sobre un proyecto ya configurado = re-auditoría (solo
 propone el delta). Además: **README obligatorio** al crear/configurar (actualización no
 destructiva si ya existe); comandos consolidados en el **runner canónico del stack**
 (package.json scripts, Makefile, Gradle, dotnet CLI); pregunta de **OpenAPI/Swagger** al
@@ -240,7 +247,7 @@ mantiene esta lista al día:
 - **Modelos**: Sonnet 5 (contexto 1M), Opus 4.8 (effort high por defecto, `/effort xhigh`, fast mode
   2x costo / 2.5x velocidad). `fallbackModel` (hasta 3 en cadena) ya configurado aquí.
 - **Skills/plugins**: `/reload-skills` sin reiniciar; skills de proyecto en `.claude/skills/` cargan
-  sin marketplace (≥ 2.1.191); `claude plugin init` para scaffolding; `disallowed-tools` en frontmatter.
+  sin marketplace (≥ 2.1.157); `claude plugin init` para scaffolding; `disallowed-tools` en frontmatter.
 - **Windows**: desde 2.1.120 no requiere Git Bash (usa PowerShell tool); instalador nativo recomendado.
 - **Equipo/nube**: `/team-onboarding` (empaqueta tu setup como guía replicable), Routines (agentes
   cloud programados desde la web), `claude agents` (vista de todas las sesiones).

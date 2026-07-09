@@ -14,7 +14,12 @@ Gather silently:
 - **Claude CLI**: `claude --version` (needs ≥ 2.1.187; install with the native installer:
   `curl -fsSL https://claude.ai/install.sh | bash` on macOS/Linux/WSL,
   `irm https://claude.ai/install.ps1 | iex` on Windows PowerShell).
-- **Existing global config**: does `~/.claude/` exist with a `CLAUDE.md`/`settings.json`?
+- **Existing global config**: if `~/.claude/` exists, inventory it read-only — which of
+  `CLAUDE.md`/`settings.json` are present, file counts under `skills/`, `agents/`,
+  `hooks/`, `rules/`, and whether they differ from this repo's `global/` (`diff -rq`).
+  This feeds the Phase 2 overwrite summary.
+- **Other AI assistants**: machine-level config such as `~/.codex/`, `~/.cursor/`,
+  `~/.gemini/`, or a global `AGENTS.md` — report what exists; never touch it.
 - **Secrets**: does `secrets.env` exist in this directory?
 - **Marketplace**: `claude plugin marketplace list` — is `gaston-plugins` registered?
 - **Current directory**: are you inside this toolbox repo, or inside a target project?
@@ -39,12 +44,18 @@ Ask in order, skipping anything Phase 0 already answered:
      works except the context7 MCP key (research falls back to web) — and say so upfront.
    - Company machine with policy restrictions (no global npm, proxy, no winget): surface
      the blockers found in Phase 0 and agree on workarounds before proceeding.
-4. **Projects** — which one(s)? Ask for the path(s) if you are not already inside one.
+4. **Owner + global only** — preferred response language? Default: keep Spanish. Any other
+   answer: run the installer with `CLAUDE_LANGUAGE=<language>` (e.g. `english`) — it
+   rewrites the installed copies and persists machine-locally, so plain re-runs keep it.
+5. **Projects** — which one(s)? Ask for the path(s) if you are not already inside one.
    Stack detection is NOT your job here; the project protocol handles it.
 
 ## Phase 2 — Route (confirm, then execute)
 
-State the chosen route in one short summary and get a yes before executing.
+State the chosen route in one short summary and get a yes before executing. For
+owner + global, the summary MUST list what the Phase 0 inventory found that will be
+overwritten, and note that the installer first snapshots those exact items to
+`~/.claude/.backup-<timestamp>/` (last 3 kept — see AGENT-INSTALL.md "Rollback & uninstall").
 
 | Who | Scope | Do this |
 |---|---|---|

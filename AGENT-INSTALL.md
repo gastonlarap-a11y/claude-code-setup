@@ -38,20 +38,32 @@ Run:
 bash install.sh        # native Windows: .\install.ps1 from PowerShell
 ```
 
+Response language: pass `CLAUDE_LANGUAGE=<language>` (default `spanish`) — the installer
+applies it to the copied `settings.json` (`"language"`) and `CLAUDE.md` (Language section)
+and persists it in `~/.claude/.install-profile`, so re-runs without the variable keep the
+choice. The repo sources always stay Spanish-default; the anchor literals live in
+`scripts/language-anchors.env` (asserted by CI).
+
 This does, idempotently:
-1. Copies `global/CLAUDE.md`, `global/settings.json`, `global/skills/`, `global/agents/`,
+1. Backs up the exact items it is about to replace into `~/.claude/.backup-<timestamp>/`
+   (last 3 backups kept — see "Rollback & uninstall" below).
+2. Copies `global/CLAUDE.md`, `global/settings.json`, `global/skills/`, `global/agents/`,
    `global/hooks/`, `global/rules/` and `global/statusline.sh` into `~/.claude/` and marks
    scripts executable.
-2. Sources `secrets.env` and injects `CONTEXT7_API_KEY` directly into the `context7` MCP
+3. Prunes orphans via `~/.claude/.install-manifest`: files shipped by a previous run but
+   no longer in the repo are removed (manifest-listed paths only — user files survive).
+4. Applies `CLAUDE_LANGUAGE` (if set or persisted) to the copied `settings.json` and
+   `CLAUDE.md` — see "Response language" above.
+5. Sources `secrets.env` and injects `CONTEXT7_API_KEY` directly into the `context7` MCP
    registration at user scope (`~/.claude.json` — machine-local, never committed). Without
    secrets, context7 registers keyless (lower rate limits) and `/doctor` stays clean.
    Note: a user-level `settings.local.json` env block is NOT read by Claude Code — the
    `${VAR}` placeholders in MCP configs expand from the process environment only.
-3. (Re-)registers `context7` (`claude mcp remove` + `add-json`), so key/config updates
+6. (Re-)registers `context7` (`claude mcp remove` + `add-json`), so key/config updates
    take effect on re-runs.
-4. Registers this repo as the `gaston-plugins` marketplace
+7. Registers this repo as the `gaston-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
-5. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 7 stack
+8. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 7 stack
    plugins + the 5 domain plugins: api-design, bots, realtime, background-jobs, ux).
    Stack/domain plugins install disabled (`defaultEnabled: false` in the manifests +
    explicit `false` entries in `global/settings.json`); LSP plugins stay globally enabled.
@@ -119,7 +131,21 @@ teammate's machine): follow `AGENT-PROJECT-SETUP.md` instead of this file.
 - Per-project config: each repo under `~/Documents/Git/` carries its own `CLAUDE.md` +
   `.claude/` in git; nothing to restore from here.
 
+## Rollback & uninstall
+
+- Every run first snapshots the files it replaces into `~/.claude/.backup-<timestamp>/`
+  (last 3 kept). Rollback: `cp -R ~/.claude/.backup-<ts>/. ~/.claude/` and open a new
+  session.
+- Machine-local installer state: `~/.claude/.install-profile` (language) and
+  `~/.claude/.install-manifest` (copied-file list used to prune renamed/removed items).
+- Uninstall: delete the paths listed in `~/.claude/.install-manifest` plus the
+  `.install-*` and `.backup-*` entries; then `claude plugin marketplace remove
+  gaston-plugins`, uninstall the `plugins.txt` plugins, and
+  `claude mcp remove context7 --scope user`. Anything not in the manifest was not created
+  by the installer — leave it.
+
 ## Notes
 - Commits in this repo (and everywhere): NO `Co-Authored-By` trailers, no AI attribution.
-- All config files stay in English; conversation with the user is in Spanish. Research and
+- All config files stay in English; conversation with the user is in their configured
+  language (Spanish by default — see `CLAUDE_LANGUAGE` in section 2). Research and
   doc lookups are done in English against the latest stable, official sources.

@@ -20,6 +20,6 @@ Target: the marketplace repo — resolve its path from `claude plugin marketplac
    ```
 6. **Commit** in the marketplace repo, Conventional Commits, one commit for the whole refresh:
    `chore(plugins): refresh <names> against latest stable docs` — never any AI attribution.
-7. **Report** (in Spanish): table of what changed (file → claim → old → new → source), what was verified-and-current, and anything that needs my decision (e.g. a recommended package deprecated with two successors).
+7. **Report** (in the user's configured language): table of what changed (file → claim → old → new → source), what was verified-and-current, and anything that needs my decision (e.g. a recommended package deprecated with two successors).
 
 Nothing stale? Say so explicitly, with the verification date — that is a valid result.

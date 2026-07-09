@@ -1,0 +1,34 @@
+name: installer-smoke
+
+# Real-execution coverage for the installers (validate.yml only LINTS them): the bash
+# matrix runs on Linux, and the PowerShell matrix runs under Windows PowerShell 5.1
+# (powershell.exe, NOT pwsh) — the engine whose encoding behavior install.ps1 protects
+# against. Path-filtered because Windows runners cost 2x minutes.
+on:
+  push:
+    paths:
+      - install.sh
+      - install.ps1
+      - 'scripts/**'
+      - global/CLAUDE.md
+      - global/settings.json
+      - .github/workflows/installer-smoke.yml
+  workflow_dispatch:
+
+jobs:
+  smoke-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run installer smoke matrix (bash)
+        run: bash scripts/installer-smoke.sh
+
+  smoke-windows-ps51:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run installer smoke matrix (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          $PSVersionTable.PSVersion | Out-String | Write-Host
+          .\scripts\installer-smoke.ps1
