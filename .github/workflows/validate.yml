@@ -36,8 +36,12 @@ jobs:
           if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
             Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
           }
-          $findings = Invoke-ScriptAnalyzer -Path ./install.ps1, ./scripts/installer-smoke.ps1 `
-            -Severity Warning, Error -ExcludeRule PSAvoidUsingWriteHost
+          # -Path takes a single string; loop the scripts and collect findings.
+          $findings = @()
+          foreach ($script in './install.ps1', './scripts/installer-smoke.ps1') {
+            $findings += Invoke-ScriptAnalyzer -Path $script `
+              -Severity Warning, Error -ExcludeRule PSAvoidUsingWriteHost
+          }
           if ($findings) {
             $findings | Format-Table -AutoSize | Out-String | Write-Host
             exit 1
