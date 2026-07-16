@@ -162,9 +162,9 @@ print(json.dumps(d))")"
   # Personal marketplace (this repo) — register or refresh, idempotent.
   # shellcheck disable=SC2015  # echo as the && branch cannot fail
   claude plugin marketplace add "$SRC" 2>/dev/null \
-    && echo "  marketplace: gaston-plugins registered" \
-    || { claude plugin marketplace update gaston-plugins 2>/dev/null \
-         && echo "  marketplace: gaston-plugins refreshed" \
+    && echo "  marketplace: dev-plugins registered" \
+    || { claude plugin marketplace update dev-plugins 2>/dev/null \
+         && echo "  marketplace: dev-plugins refreshed" \
          || echo "  marketplace: could not register — check 'claude plugin marketplace list'"; }
 
   while IFS= read -r plugin; do

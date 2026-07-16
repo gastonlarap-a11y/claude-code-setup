@@ -1,6 +1,6 @@
 # claude-code-setup
 
-Portable Claude Code configuration and the `gaston-plugins` marketplace. Agent entry points:
+Portable Claude Code configuration and the `dev-plugins` marketplace. Agent entry points:
 
 - **Not sure / any machine, any user**: `START.md` — interactive bootstrap that detects
   the environment, interviews the user, and routes to the right procedure below.
@@ -15,7 +15,7 @@ Portable Claude Code configuration and the `gaston-plugins` marketplace. Agent e
 - Plugins are edited HERE under `plugins/`, never in `~/.claude/`. Any plugin change bumps
   `version` in BOTH `.claude-plugin/marketplace.json` (that entry) and the plugin's own
   `.claude-plugin/plugin.json`, then validate & republish:
-  `claude plugin validate ./plugins/<name> --strict && claude plugin marketplace update gaston-plugins && claude plugin update <name>@gaston-plugins`.
+  `claude plugin validate ./plugins/<name> --strict && claude plugin marketplace update dev-plugins && claude plugin update <name>@dev-plugins`.
   CI re-checks JSON, version parity + `enabledPlugins` sync, schemas, language anchors and
   PowerShell lint on push (`validate.yml`); installer changes also trigger the
   real-execution smoke matrix (`installer-smoke.yml`, Linux + Windows PowerShell 5.1).

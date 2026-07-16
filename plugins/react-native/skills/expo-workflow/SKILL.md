@@ -11,7 +11,7 @@ For deeper Expo automation (EAS builds, submissions, doctor checks), enable the 
 ```json
 {
   "enabledPlugins": {
-    "react-native@gaston-plugins": true,
+    "react-native@dev-plugins": true,
     "expo@claude-plugins-official": true
   }
 }

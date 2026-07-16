@@ -169,10 +169,10 @@ if (Get-Command claude -ErrorAction SilentlyContinue) {
     # Personal marketplace (this repo) - register or refresh, idempotent.
     claude plugin marketplace add $Src 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
-        Write-Host '  marketplace: gaston-plugins registered'
+        Write-Host '  marketplace: dev-plugins registered'
     } else {
-        claude plugin marketplace update gaston-plugins 2>&1 | Out-Null
-        if ($LASTEXITCODE -eq 0) { Write-Host '  marketplace: gaston-plugins refreshed' }
+        claude plugin marketplace update dev-plugins 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { Write-Host '  marketplace: dev-plugins refreshed' }
         else { Write-Host "  marketplace: could not register - check 'claude plugin marketplace list'" }
     }
 

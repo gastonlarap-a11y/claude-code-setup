@@ -1,8 +1,10 @@
 {
   "name": "react-native",
   "displayName": "React Native Stack",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "React Native + Expo conventions (pair with the official expo plugin)",
-  "author": { "name": "Gaston Lara" },
-  "defaultEnabled": false
+  "defaultEnabled": false,
+  "author": {
+    "name": "dev-plugins"
+  }
 }

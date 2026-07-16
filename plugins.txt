@@ -6,16 +6,16 @@ csharp-lsp@claude-plugins-official
 # Official extras (installed, enabled per project)
 expo@claude-plugins-official
 # Personal stack plugins (installed, enabled per project)
-nestjs@gaston-plugins
-go@gaston-plugins
-android-kotlin@gaston-plugins
-react-nextjs@gaston-plugins
-flutter@gaston-plugins
-react-native@gaston-plugins
-dotnet@gaston-plugins
+nestjs@dev-plugins
+go@dev-plugins
+android-kotlin@dev-plugins
+react-nextjs@dev-plugins
+flutter@dev-plugins
+react-native@dev-plugins
+dotnet@dev-plugins
 # Personal domain plugins (installed, enabled per project)
-api-design@gaston-plugins
-bots@gaston-plugins
-realtime@gaston-plugins
-background-jobs@gaston-plugins
-ux@gaston-plugins
+api-design@dev-plugins
+bots@dev-plugins
+realtime@dev-plugins
+background-jobs@dev-plugins
+ux@dev-plugins
