@@ -1,6 +1,6 @@
 # claude-code-setup — Configuración portable de Claude Code
 
-Respaldo versionado y **marketplace de plugins** (`gaston-plugins`) de mi configuración
+Respaldo versionado y **marketplace de plugins** (`dev-plugins`) de mi configuración
 global de Claude Code. Objetivo: que cualquier sesión tenga el máximo contexto real con el
 mínimo de tokens — conocimiento por stack/dominio que solo carga cuando se usa,
 investigación automática de docs oficiales, guardrails deterministas, y un protocolo
@@ -121,9 +121,12 @@ contradice el código o corriges lo mismo dos veces — el agente propone el fix
 esa misma sesión. Re-correr `/setup-project` sobre un proyecto ya configurado = re-auditoría (solo
 propone el delta). Además: **README obligatorio** al crear/configurar (actualización no
 destructiva si ya existe); comandos consolidados en el **runner canónico del stack**
-(package.json scripts, Makefile, Gradle, dotnet CLI); pregunta de **OpenAPI/Swagger** al
-detectar un backend HTTP; y bloque de **estándares de ingeniería** (tests + verificación
-antes de declarar done) en el `CLAUDE.md` generado.
+(package.json scripts, Makefile, Gradle, dotnet CLI); **set estándar de skills de
+proyecto** (scaffold de la unidad de trabajo, verify, deploy, db-migration) derivado del
+código Y del roadmap del repo; **preguntas batcheadas automáticas** tras el análisis
+(OpenAPI/Swagger en backends HTTP, hook de formato si hay formatter, plugin LSP con chequeo
+de compatibilidad, timing del skill de deploy); y bloque de **estándares de ingeniería**
+(tests + verificación antes de declarar done) en el `CLAUDE.md` generado.
 
 **Costo real**: la config siempre-cargada queda mínima (decenas de líneas); el conocimiento
 pesado vive en plugins/skills/rules que cargan solo al usarse. El ahorro (cero vueltas en
@@ -143,8 +146,8 @@ Mapeo de plugins que aplica el protocolo (referencia, por si lo haces a mano):
 | Bot (cualquier stack) | stack + `bots` (+ `background-jobs`) |
 | Stack sin plugin (Python, Rust, …) | rules/skills locales generados por el protocolo (auto-suficientes) |
 
-Manual: `.claude/settings.json` con `{ "enabledPlugins": { "nestjs@gaston-plugins": true } }`
-o `claude plugin enable <name>@gaston-plugins --scope project`. Verifica con `/context`:
+Manual: `.claude/settings.json` con `{ "enabledPlugins": { "nestjs@dev-plugins": true } }`
+o `claude plugin enable <name>@dev-plugins --scope project`. Verifica con `/context`:
 deben aparecer las skills del plugin habilitado y nada más.
 
 ## Compartir este directorio con otra persona
@@ -184,8 +187,8 @@ claude --plugin-dir ./plugins/<name>    # y /reload-plugins (o /reload-skills) a
 # 3. Sube version en .claude-plugin/marketplace.json Y plugins/<name>/.claude-plugin/plugin.json
 # 4. Valida y publica:
 claude plugin validate ./plugins/<name> --strict
-claude plugin marketplace update gaston-plugins
-claude plugin update <name>@gaston-plugins
+claude plugin marketplace update dev-plugins
+claude plugin update <name>@dev-plugins
 # 5. Commit (Conventional, sin menciones de IA) y push — el CI repite la validación
 ```
 
@@ -256,7 +259,7 @@ mantiene esta lista al día:
 
 ```bash
 claude mcp list                      # context7 conectado
-claude plugin marketplace list      # gaston-plugins
+claude plugin marketplace list      # dev-plugins
 claude plugin list                   # 4 LSP enabled; 12 stack/dominio + expo disabled
 ```
 

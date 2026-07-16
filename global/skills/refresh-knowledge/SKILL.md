@@ -1,12 +1,12 @@
 ---
 name: refresh-knowledge
-description: Re-verify and update the curated knowledge in the gaston-plugins marketplace (recipes, references, tooling versions) against the latest stable official docs, then republish the plugins.
+description: Re-verify and update the curated knowledge in the dev-plugins marketplace (recipes, references, tooling versions) against the latest stable official docs, then republish the plugins.
 disable-model-invocation: true
 ---
 
 # Refresh marketplace knowledge
 
-Target: the marketplace repo — resolve its path from `claude plugin marketplace list` (the `source` of `gaston-plugins`); if that fails and the current directory contains `.claude-plugin/marketplace.json` naming `gaston-plugins`, use it. Scope: $ARGUMENTS (a plugin name, a specific skill, or empty = the highest-drift-risk files: every `recipes` skill and every `references/*.md`).
+Target: the marketplace repo — resolve its path from `claude plugin marketplace list` (the `source` of `dev-plugins`); if that fails and the current directory contains `.claude-plugin/marketplace.json` naming `dev-plugins`, use it. Scope: $ARGUMENTS (a plugin name, a specific skill, or empty = the highest-drift-risk files: every `recipes` skill and every `references/*.md`).
 
 ## Procedure
 1. **Inventory**: list the in-scope files under `plugins/*/skills/**` AND `global/skills/**` (the cross-stack skills — ci-cd action pins, docker-kubernetes base images, database tooling — drift just like plugin recipes). For each, extract the concrete claims: package names, APIs/methods, action/image version tags, version-sensitive statements, limits/quotas. On a full pass, also include the repo's own Claude Code claims (README "Novedades"/version minimums, START.md/AGENT-INSTALL.md) — verify those against `code.claude.com/docs/en/changelog` and `code.claude.com/docs/en/whats-new`.
@@ -15,8 +15,8 @@ Target: the marketplace repo — resolve its path from `claude plugin marketplac
 4. **Version bump**: for each modified plugin, bump `version` (patch) in BOTH `.claude-plugin/marketplace.json` (that plugin's entry) and the plugin's own `plugin.json`.
 5. **Republish**:
    ```bash
-   claude plugin marketplace update gaston-plugins
-   claude plugin update <name>@gaston-plugins   # per modified plugin
+   claude plugin marketplace update dev-plugins
+   claude plugin update <name>@dev-plugins   # per modified plugin
    ```
 6. **Commit** in the marketplace repo, Conventional Commits, one commit for the whole refresh:
    `chore(plugins): refresh <names> against latest stable docs` — never any AI attribution.

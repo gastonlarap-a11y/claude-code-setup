@@ -33,6 +33,7 @@ Everything in English. `<angle brackets>` mark what to replace.
 - Every feature ships with its tests. Run <lint> + <typecheck> + <test> before declaring work done; report real results.
 - Handle errors explicitly at boundaries; never swallow exceptions or ignored error returns.
 - No speculative abstractions: introduce a pattern only for a problem this repo has, and say which and why.
+- Ambiguous request → ask targeted questions first. Requested approach wrong or beatable → say why and let the requester choose before proceeding.
 ```
 
 ## Root CLAUDE.md — thin shim (fresh configs)
@@ -159,7 +160,7 @@ verified command. Add the missing ones; never rename existing scripts that work.
 ```json
 {
   "enabledPlugins": {
-    "<stack>@gaston-plugins": true
+    "<stack>@dev-plugins": true
   },
   "permissions": {
     "allow": [
@@ -193,7 +194,16 @@ not banned (deploys, pushes, migrations); drop the block if the user prefers no 
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "if": "Edit(*.<ext>)", "command": "<verified formatter cmd>" }
+          {
+            "type": "command",
+            "if": "Edit(*.<ext>)",
+            "command": "jq -r '.tool_input.file_path' | xargs -r <verified formatter cmd>"
+          },
+          {
+            "type": "command",
+            "if": "Write(*.<ext>)",
+            "command": "jq -r '.tool_input.file_path' | xargs -r <verified formatter cmd>"
+          }
         ]
       }
     ]
@@ -201,8 +211,9 @@ not banned (deploys, pushes, migrations); drop the block if the user prefers no 
 }
 ```
 
-The `if` filter (permission-rule syntax) keeps the hook from spawning on every edit —
-scope it to the files the tool actually handles.
+The hook command receives the tool-call JSON on stdin — extract `.tool_input.file_path`
+with jq, never guess paths. The `if` filter (permission-rule syntax) keeps the hook from
+spawning on every edit — scope it to the files the tool actually handles.
 
 ## .claude/rules/<topic>.md (path-scoped)
 
@@ -233,9 +244,99 @@ disable-model-invocation: true   # keep for side-effectful workflows; drop for p
 3. Run `<verified check>` and report real results.
 ```
 
+## Standard skill set skeletons (SKILL.md step 3)
+
+Evaluate all four per project. Fill only with commands/paths verified in step 1, or quoted
+from roadmap docs — then the skill body says "pending validation" next to the unverified step.
+
+### new-<unit> — scaffold the repeating unit of work
+
+```markdown
+---
+name: new-<unit>
+description: Scaffold a new <unit> under <path> following the <exemplar> pattern. Use when adding a <feature/module/slice>.
+argument-hint: "<unit-name>"
+---
+
+# New <unit>
+
+1. Create `<path>/<name>/` mirroring `<best existing exemplar dir>`: <the files every unit has>.
+2. <register/mount step — exact file and code shape, e.g. wire it in the entry point>
+3. <test conventions: runner, file naming, the repo's assertion style>
+4. Run <lint> + <typecheck> + <test> and report real results.
+```
+
+### verify — prove a change works end-to-end
+
+```markdown
+---
+name: verify
+description: Launch the app and verify a change end-to-end. Use before declaring work done.
+---
+
+# Verify
+
+1. Start: `<verified dev/run command>` (background) — ready when <log line / port>.
+2. Probe: `<curl/CLI command against the real health or feature endpoint>` → expect <output>.
+3. <extra probes worth checking: docs endpoint, main page, …>
+4. Stop the dev process; report what was actually observed.
+```
+
+Library without a runtime surface: replace 1–3 with the full test suite plus an
+example/consumer run.
+
+### deploy — side-effectful, never model-invoked
+
+```markdown
+---
+name: deploy
+description: Deploy/release this project to <target>. User-invoked only.
+disable-model-invocation: true
+---
+
+# Deploy to <target>
+
+1. <pre-flight: tests/build/migrations against prod — exact commands>
+2. <the deploy/restart commands, verbatim from the repo's docs or CI>
+3. <post-check: health probe on the deployed instance>
+```
+
+### db-migration
+
+```markdown
+---
+name: db-migration
+description: Create and apply a schema migration and regenerate the client. Use when changing the data model.
+---
+
+# DB migration
+
+1. Edit `<schema file>`.
+2. Dev: `<verified migrate-dev command>` (names the migration) → `<codegen command>`.
+3. Prod (if applicable): `<migrate-deploy command with the prod connection>` — see the deploy skill.
+4. Run <typecheck> + <test>; never edit `<generated dir>` or committed migrations.
+```
+
+## Official code-intelligence (LSP) plugins — offer with compatibility check
+
+LSP plugins from `claude-plugins-official` require their language-server binary on PATH —
+verify the current plugin name and required binary via the `research` skill before
+offering, never from memory. Known caveat: `typescript-lsp` needs
+`typescript-language-server` (wraps tsserver), which does not exist under the native
+`typescript@7` (tsgo) preview — flag as incompatible there. Binary missing and not
+trivially installable → skip, with a one-line reason in the proposal.
+
 ## .gitignore additions
 
 ```
 CLAUDE.local.md
 .claude/settings.local.json
+```
+
+When env/secrets files are not already ignored, also:
+
+```
+.env*
+!.env.example
+secrets*.env
 ```

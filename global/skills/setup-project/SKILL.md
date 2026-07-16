@@ -49,11 +49,17 @@ Hard rules:
   (settings, rules, skills, hooks, agents, commands), `AGENTS.md`, `.cursorrules`,
   `.cursor/rules/`, `.windsurfrules`, `.github/copilot-instructions.md`, `.mcp.json`,
   nested `CLAUDE.md` files in subdirectories.
-- **Ecosystem**: `claude plugin marketplace list` (is `gaston-plugins` or another relevant
+- **Ecosystem**: `claude plugin marketplace list` (is `dev-plugins` or another relevant
   marketplace registered?), `claude plugin list`, `claude mcp list`.
 - **Docs**: README/ARCHITECTURE/CONTRIBUTING — read them; config points to them, never
   duplicates them into CLAUDE.md. Diff the README against the skeleton in
   `references/templates.md`: missing sections and commands proven wrong become step-3 work.
+  Also read roadmap/plan docs (`PLAN.md`, `TODO*`, implementation guides under `docs/`):
+  procedures the project is GOING to repeat feed the step-3 standard skill set.
+- **Env vars**: required variables from `.env.example`, the repo's env-reader (the config
+  file that reads the environment), CI `env:` blocks, compose/manifests — note which ones
+  lack local values. Never read the values in existing `.env`/secrets files, only the
+  variable names. Feeds the step-3 environment interview.
 
 ## 2. Audit the existing config (skip when there is none)
 
@@ -84,11 +90,20 @@ keep / tighten / move / add / retire — retire is always shown to the user, nev
 - **Coverage gaps**: missing test/lint/build commands, no architecture map, routine commands
   not pre-approved in permissions, secrets not deny-listed, generated/vendored dirs not
   read-blocked.
+- **Skills coverage**: `.claude/skills/` covers the step-3 standard skill set where
+  applicable (scaffold / verify / deploy / db-migration). A CLAUDE.md that references
+  `.claude/skills/` while the directory is missing or empty is a gap, not a valid state.
 
 ## 3. Design the target config
 
 Compose only from what the project actually needs — a missing section beats a speculative
 one. Skeletons for every block: `references/templates.md` (read it before writing files).
+
+Universal baseline — applied to every project, no analysis or question needed: permissions
+`deny` for secrets and generated/vendored reads, `ask` for pushes/migrations, gitignored
+local config (`CLAUDE.local.md`, `.claude/settings.local.json`), the step-6 maintenance
+block, the engineering-standards block, and an accurate README. Everything else below is
+derived from the repo's own evidence.
 
 | Block | Contents | Budget |
 |---|---|---|
@@ -97,9 +112,32 @@ one. Skeletons for every block: `references/templates.md` (read it before writin
 | `README.md` | human usage docs: always created for new projects, non-destructively updated for existing ones | not context-loaded — thorough beats terse |
 | `.claude/rules/<topic>.md` | per-language/area conventions derived from observed code, `paths:`-scoped | ≤ ~40 lines each |
 | `.claude/settings.json` | `enabledPlugins`, `permissions.allow` for the verified routine commands, `permissions.deny` for secrets + generated/vendored reads | — |
-| `.claude/skills/<name>/` | repeated procedures found in step 1, as done HERE | on demand |
+| `.claude/skills/<name>/` | the standard skill set below + repeated procedures found in step 1, as done HERE | on demand |
 | Hooks | only for guarantees with a deterministic tool behind them (e.g. formatter configured) | zero context |
 | `CLAUDE.local.md`, `.claude/settings.local.json` | personal-only bits found in the audit; must be gitignored | — |
+
+### Standard skill set (forward-looking, not just observed)
+
+Evaluate all four for every project; create each one when its basis exists in the repo or
+its roadmap docs, discard with a one-line reason when it does not. Skeletons in
+`references/templates.md`:
+
+- `new-<unit>` — scaffold the repo's repeating unit of work (module/slice/feature/package),
+  derived from the best existing exemplar; mandatory when roadmap docs show more units
+  coming.
+- `verify` — launch the app and prove a change works end-to-end (dev command, health
+  URL, expected output); the global run/verify skills look for this first. Libraries get a
+  test-based variant.
+- `deploy` / `release` — when a deploy/release procedure is documented or detectable (CI
+  deploy job, Dockerfile, launchd/systemd, store publishing); always
+  `disable-model-invocation: true`. In the roadmap but not built yet → batched question.
+- `db-migration` — when a migrations tool exists: create/apply/regenerate client, dev vs
+  prod.
+
+Harness-dependent blocks (hooks schema, skills frontmatter, rules `paths:` scoping, plugin
+names) are verified against the current official Claude Code docs via the `research` skill
+before writing — never from memory; `references/templates.md` is the starting point, not
+the authority.
 
 Canonical file: with no existing instruction file, generate `AGENTS.md` (the cross-agent
 standard — Codex, Cursor and Gemini CLI read it too) plus the thin `CLAUDE.md` that imports
@@ -145,13 +183,13 @@ When verified commands are scattered (CI-only, docs-only, raw multi-flag invocat
 missing standard names, propose consolidating them into the runner (step-4 approval):
 reuse existing names, add missing ones, never rename ones that work.
 
-Plugin mapping when `gaston-plugins` is registered: NestJS → `nestjs` + `api-design` ·
+Plugin mapping when `dev-plugins` is registered: NestJS → `nestjs` + `api-design` ·
 Go service → `go` · Android → `android-kotlin` · Next.js → `react-nextjs` · Flutter →
 `flutter` · React Native → `react-native` + `expo@claude-plugins-official` · C#/.NET →
 `dotnet` + `api-design` · add `bots` /
 `realtime` / `background-jobs` per domain · any project with a user-facing UI (web or
-mobile, any framework) → `ux`. Also suggest the official code-intelligence (LSP)
-plugin for the project's language if not already enabled.
+mobile, any framework) → `ux`. The official code-intelligence (LSP) plugin for the
+project's language goes through the compatibility-checked batched question below.
 
 Stack without a matching plugin, or no marketplace available: encode the equivalent
 essentials as local `.claude/rules/` + `.claude/skills/` instead — derived from this
@@ -172,6 +210,16 @@ projects skip it: code evidence outranks questions. Conventions come from the ch
 plugin or the user's template repo, and the config states the intended architecture so the
 very first sessions build it consistently.
 
+### Environment interview (one variable at a time)
+
+When required variables lack local values, interview the user — one question per variable
+(what it is for, expected format, an example), never batched and never guessed. Then write
+the answers yourself into the file the repo's convention dictates (`.env`, `.env.local`,
+`secrets.env`, …) AFTER verifying that file is gitignored — if it is not, fix `.gitignore`
+first. Create or update `.env.example` with placeholders only. Real values never appear in
+CLAUDE.md, settings, committed files, or the step-4 proposal. This is the one deliberate
+exception to the batched-questions rule below.
+
 ### Ask before proposing (batched, one message)
 
 Only questions detection cannot answer — skip any the repo already answers or the
@@ -183,6 +231,13 @@ new-project interview already settled:
   (built per the `ci-cd` skill). Never create CI without an explicit yes; if CI already
   exists, do not offer.
 - Deployment target not detectable → README `Deployment` section.
+- Formatter configured (Biome, Prettier, gofmt, ktlint, …) → ALWAYS offer the PostToolUse
+  format hook (templates.md skeleton), noting its cost: one process spawn per edit.
+- Official code-intelligence (LSP) plugin exists for the language → offer it AFTER checking
+  the toolchain supports it (required binary present or installable; compatibility notes in
+  templates.md — e.g. typescript-lsp needs tsserver, absent under tsgo).
+- Deploy procedure in the roadmap but not built yet → create the deploy skill now marked
+  "pending validation", or defer until it exists.
 - Brand-new project → README language.
 - .NET only → unix-first (`Makefile`) or Windows-first (`scripts/*.ps1`) team.
 
@@ -227,6 +282,9 @@ loop that keeps the config honest between runs):
   code, or the user corrects the same thing twice.
 - New repeated procedure → propose a `.claude/skills/` entry; new language/area convention →
   a `paths:`-scoped rule in `.claude/rules/` — never more always-loaded lines.
+- New technology appears in the repo (dependency, SDK, platform, infra — e.g. a cloud
+  provider or a new datastore) → offer the matching plugins/skills/rules in the same
+  session; ask first, never add silently.
 - After structural changes (new package, framework migration, tooling swap), re-run
   `/setup-project audit`.
 ```
@@ -242,6 +300,7 @@ maintenance block above is the recommended default.
 Re-running this skill on an already-configured project = re-audit: diff steps 1–2 against
 reality and propose only the delta — including architectural drift: documented principles
 the code no longer follows are re-graded (re-adopt, amend, or retire), never left stale.
+The re-audit also refreshes the project's maintenance block to the current version above.
 
 ## 7. Report
 

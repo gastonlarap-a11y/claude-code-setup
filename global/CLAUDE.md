@@ -17,6 +17,7 @@ Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android
 
 ## Workflow rules
 - **Never assume**: if a request is ambiguous, incomplete, or contradictory, ask targeted questions before acting.
+- **Counter-propose**: if what I asked is incorrect, suboptimal, or a more efficient route exists, say so with the why BEFORE acting, and let me choose between my version and yours; once I pick, execute without re-litigating.
 - Research proactively without being asked: for any third-party API surface, version, or "how do I X" not fully covered by a loaded skill, use the `research` skill (context7 + official docs) and fetch only the relevant section — never whole docs, never training-data guesses.
 - Research and doc lookups: always in English, preferring the latest stable release and official sources (docs, changelogs, release notes). Never assume versions from memory.
 - VCS via CLI: use `gh` for GitHub remotes and `az repos` / `az devops` for Azure DevOps remotes (detect from `git remote -v`). If the required CLI is missing, install it or give me the exact install steps and pause until I confirm.

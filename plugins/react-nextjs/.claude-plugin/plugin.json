@@ -1,8 +1,10 @@
 {
   "name": "react-nextjs",
   "displayName": "React/Next.js Stack",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "React/Next.js App Router architecture, testing and UI conventions",
-  "author": { "name": "Gaston Lara" },
-  "defaultEnabled": false
+  "defaultEnabled": false,
+  "author": {
+    "name": "dev-plugins"
+  }
 }

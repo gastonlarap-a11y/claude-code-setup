@@ -1,8 +1,10 @@
 {
   "name": "flutter",
   "displayName": "Flutter Stack",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Flutter/Dart conventions plus official Dart MCP server and Dart LSP",
-  "author": { "name": "Gaston Lara" },
-  "defaultEnabled": false
+  "defaultEnabled": false,
+  "author": {
+    "name": "dev-plugins"
+  }
 }
