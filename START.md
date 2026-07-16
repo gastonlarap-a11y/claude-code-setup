@@ -21,7 +21,7 @@ Gather silently:
 - **Other AI assistants**: machine-level config such as `~/.codex/`, `~/.cursor/`,
   `~/.gemini/`, or a global `AGENTS.md` — report what exists; never touch it.
 - **Secrets**: does `secrets.env` exist in this directory?
-- **Marketplace**: `claude plugin marketplace list` — is `gaston-plugins` registered?
+- **Marketplace**: `claude plugin marketplace list` — is `dev-plugins` registered?
 - **Current directory**: are you inside this toolbox repo, or inside a target project?
 
 Windows: running Claude Code needs no Git Bash (since 2.1.120 it falls back to the
@@ -35,12 +35,14 @@ this — skip the requirement for that route.
 
 Ask in order, skipping anything Phase 0 already answered:
 
-1. **Who are you?** The owner of this setup (Gastón), or someone else using it as a
-   toolbox? This decides whether `~/.claude` may be touched at all.
+1. **Who are you?** The owner of this setup, or someone else using it as a toolbox?
+   This decides whether `~/.claude` may be touched at all.
 2. **What do you want configured?** (a) this machine's global setup, (b) one or more
    projects, (c) both.
 3. **Owner + global only** — is this a personal machine or a company/restricted one?
-   - Company machine without `secrets.env`: offer to install WITHOUT secrets — everything
+   - No `secrets.env` and the user HAS the values: read `secrets.env.example`, ask for each
+     variable one at a time, and write `secrets.env` yourself before running the installer.
+   - Company machine without the values: offer to install WITHOUT secrets — everything
      works except the context7 MCP key (research falls back to web) — and say so upfront.
    - Company machine with policy restrictions (no global npm, proxy, no winget): surface
      the blockers found in Phase 0 and agree on workarounds before proceeding.
@@ -59,7 +61,7 @@ overwritten, and note that the installer first snapshots those exact items to
 
 | Who | Scope | Do this |
 |---|---|---|
-| Owner | Global | Follow `AGENT-INSTALL.md` (runs `install.sh`; on native Windows, `install.ps1` from PowerShell). Without secrets: copy `secrets.env.example` → `secrets.env` only when the user has the real key; otherwise run anyway and report the WARNING as expected. |
+| Owner | Global | Follow `AGENT-INSTALL.md` (runs `install.sh`; on native Windows, `install.ps1` from PowerShell). No `secrets.env`: interview the user per variable from `secrets.env.example` and write the file yourself; user lacks the values → run anyway and report the WARNING as expected. |
 | Owner | Project(s) | Global first if this machine never had it (plugins live at user scope). Then, per project: follow `AGENT-PROJECT-SETUP.md` → run the `setup-project` protocol inside that repo. |
 | Someone else | Project(s) | Follow `AGENT-PROJECT-SETUP.md` only. Optionally register the marketplace (`claude plugin marketplace add <this directory>`). |
 | Someone else | Global | **Refuse the restore** — `install.sh` overwrites `~/.claude` with the owner's personal identity, language and git rules. Offer instead: marketplace registration + per-project setup, and point them to `global/` as reference material for building their own. |

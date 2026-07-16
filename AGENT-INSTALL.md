@@ -1,7 +1,7 @@
 # AGENT-INSTALL — Restore instructions for an AI agent
 
-You are restoring Gastón's Claude Code global configuration on a fresh machine from this
-directory. Follow these steps in order. Do not skip verification.
+You are restoring the owner's Claude Code global configuration on a fresh machine from
+this directory. Follow these steps in order. Do not skip verification.
 
 ## 1. Preconditions
 - Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.187** (tested with 2.1.201)
@@ -13,8 +13,9 @@ directory. Follow these steps in order. Do not skip verification.
   (macOS) / `winget install --id jqlang.jq -e` (Windows) / `sudo apt install jq` (Linux).
 - Confirm some Python is available (`python3`, `python` or `py` — any ≥3.8): `install.sh`
   and the hooks use it as the JSON fallback when `jq` is missing.
-- Confirm `secrets.env` exists here. If not, copy `secrets.env.example` to `secrets.env`
-  and ask the user for the real values before continuing.
+- Confirm `secrets.env` exists here. If not: read `secrets.env.example`, interview the
+  user one variable at a time (what it is for, expected format), then write `secrets.env`
+  yourself with the answers before continuing. Never echo the values back or commit them.
 - Dart SDK ≥ 3.9 is only needed inside Flutter projects (for the bundled Dart MCP/LSP);
   do not install it globally as part of this restore.
 
@@ -61,7 +62,7 @@ This does, idempotently:
    `${VAR}` placeholders in MCP configs expand from the process environment only.
 6. (Re-)registers `context7` (`claude mcp remove` + `add-json`), so key/config updates
    take effect on re-runs.
-7. Registers this repo as the `gaston-plugins` marketplace
+7. Registers this repo as the `dev-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
 8. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 7 stack
    plugins + the 5 domain plugins: api-design, bots, realtime, background-jobs, ux).
@@ -72,7 +73,7 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
 
 ## 3. Verify
 - `claude mcp list` shows `context7` connected.
-- `claude plugin marketplace list` shows `gaston-plugins`.
+- `claude plugin marketplace list` shows `dev-plugins`.
 - `claude plugin list` shows the 4 LSP plugins **enabled**, and `expo` + the 12 personal
   plugins (`nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`,
   `dotnet`, `api-design`, `bots`, `realtime`, `background-jobs`, `ux`) **installed but
@@ -100,7 +101,7 @@ and generates token-lean local config (protocol: `global/skills/setup-project/SK
 Manual alternative — stack plugins via the project's `.claude/settings.json`:
 
 ```json
-{ "enabledPlugins": { "nestjs@gaston-plugins": true } }
+{ "enabledPlugins": { "nestjs@dev-plugins": true } }
 ```
 
 React Native projects co-enable the official Expo plugin:
@@ -108,13 +109,13 @@ React Native projects co-enable the official Expo plugin:
 ```json
 {
   "enabledPlugins": {
-    "react-native@gaston-plugins": true,
+    "react-native@dev-plugins": true,
     "expo@claude-plugins-official": true
   }
 }
 ```
 
-CLI alternative inside the project: `claude plugin enable <name>@gaston-plugins --scope project`.
+CLI alternative inside the project: `claude plugin enable <name>@dev-plugins --scope project`.
 The template repos under `~/Documents/Git/` should carry these snippets in git (see README
 for the per-template table).
 
@@ -140,7 +141,7 @@ teammate's machine): follow `AGENT-PROJECT-SETUP.md` instead of this file.
   `~/.claude/.install-manifest` (copied-file list used to prune renamed/removed items).
 - Uninstall: delete the paths listed in `~/.claude/.install-manifest` plus the
   `.install-*` and `.backup-*` entries; then `claude plugin marketplace remove
-  gaston-plugins`, uninstall the `plugins.txt` plugins, and
+  dev-plugins`, uninstall the `plugins.txt` plugins, and
   `claude mcp remove context7 --scope user`. Anything not in the manifest was not created
   by the installer — leave it.
 
