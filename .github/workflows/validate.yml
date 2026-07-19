@@ -27,6 +27,9 @@ jobs:
       - name: Language anchors (single source consumed by installers + CI)
         run: bash scripts/check-language-anchors.sh
 
+      - name: Subagent model consistency (frontmatter vs CLAUDE_CODE_SUBAGENT_MODEL)
+        run: bash scripts/check-subagent-model.sh
+
       # Static lint ONLY — runtime coverage for install.ps1 under real Windows
       # PowerShell 5.1 lives in installer-smoke.yml (smoke-windows-ps51 job).
       # Write-Host is intentional installer output, hence the excluded rule.
