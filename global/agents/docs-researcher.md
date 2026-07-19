@@ -1,7 +1,7 @@
 ---
 name: docs-researcher
 description: Researches third-party library documentation (current versions, API surfaces, breaking changes, migration guides) using context7 and the web, and returns a concise summary. Use before writing code against an unfamiliar or recently-updated library, so the verbose research never pollutes the main context.
-model: haiku
+model: sonnet
 tools: Read, Grep, Glob, WebFetch, WebSearch, mcp__context7__resolve-library-id, mcp__context7__query-docs
 ---
 

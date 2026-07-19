@@ -69,12 +69,18 @@
       "Read(~/.aws/**)",
       "Edit(**/.env)",
       "Edit(**/.env.*)",
-      "Edit(**/secrets.env)"
+      "Edit(**/secrets.env)",
+      "Bash(*DROP DATABASE*:*)",
+      "Bash(*DROP TABLE*:*)"
     ]
   },
   "model": "fable",
   "fallbackModel": ["claude-opus-4-8", "claude-sonnet-5"],
   "language": "spanish",
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-sonnet-5"
+  },
   "attribution": {
     "commit": "",
     "pr": ""

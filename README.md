@@ -30,18 +30,18 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | Ruta | Qué es | Para qué me sirve |
 |---|---|---|
 | `global/CLAUDE.md` | Instrucciones globales → `~/.claude/CLAUDE.md` | Reglas siempre activas: español/inglés, nunca asumir, investigar proactivamente, VCS por CLI (gh / az devops), autoría limpia |
-| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH), hooks, statusline, qué plugins están activos |
-| `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart: cargan SOLO al tocar archivos de ese lenguaje |
+| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH), hooks, statusline, env (modelo de subagentes: Sonnet), qué plugins están activos |
+| `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart/java: cargan SOLO al tocar archivos de ese lenguaje |
 | `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-git-push.sh` (bloquea push directo a main/master) |
 | `global/statusline.sh` | Statusline → `~/.claude/statusline.sh` | Barra con % de contexto usado y % del límite 5h (necesita `jq`) |
-| `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) |
-| `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (haiku): investiga docs en contexto aislado |
+| `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) |
+| `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (sonnet): investiga docs en contexto aislado |
 | `global/mcp-servers.json` | Definición MCP | context7 (docs de librerías), key vía `secrets.env` |
 | `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 12 plugins con `defaultEnabled: false` |
 | `plugins/` (stack) | `nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`, `dotnet` | Convenciones de arquitectura/testing/tooling por stack; flutter trae MCP oficial de Dart + LSP de Dart; los móviles traen `recipes`; dotnet trae EF Core + SQL Server local (OrbStack), Aspire, Azure y ruta de aprendizaje |
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil) — con `references/` que cargan solo si hacen falta |
 | `plugins.txt` / `install.sh` / `install.ps1` | Instalador (bash y PowerShell nativo) | Idempotente: respalda lo que va a reemplazar (`~/.claude/.backup-<ts>`, últimos 3), copia config, poda huérfanos vía manifest, aplica `CLAUDE_LANGUAGE`, registra marketplace, instala plugins. `install.ps1` = Windows sin Git Bash |
-| `.github/workflows/*.yml` + `scripts/check-*.sh` | CI del repo | En cada push: JSON lint, paridad de versiones (dual-bump) + sync de `enabledPlugins`, shellcheck, anclas de idioma, lint de PowerShell y `claude plugin validate --strict`; y smoke real de los installers (Linux + Windows PowerShell 5.1) cuando cambian |
+| `.github/workflows/*.yml` + `scripts/check-*.sh` | CI del repo | En cada push: JSON lint, paridad de versiones (dual-bump) + sync de `enabledPlugins`, shellcheck, anclas de idioma, consistencia de modelo de subagentes, lint de PowerShell y `claude plugin validate --strict`; y smoke real de los installers (Linux + Windows PowerShell 5.1) cuando cambian |
 | `secrets.env(.example)` | Keys reales (gitignored) / plantilla | Los installers las inyectan directo en el registro MCP a nivel usuario (`~/.claude.json`, jamás commiteado) |
 | `START.md` | Bootstrap interactivo para agentes | Punto de entrada único: detecta el entorno, entrevista al usuario y enruta a la guía correcta (global, proyecto o ambos; owner o tercero; incluye Windows) |
 | `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración de MI máquina (sobreescribe `~/.claude/`) + verificación |
@@ -61,6 +61,13 @@ El diseño sigue la regla oficial de costo de contexto:
 
 Por eso los plugins van **deshabilitados por defecto**: una sesión de Go jamás paga las
 skills de Flutter. Cada proyecto habilita lo suyo (siguiente sección).
+
+> **Modelo de subagentes:** `global/settings.json` fija `env.CLAUDE_CODE_SUBAGENT_MODEL: sonnet`
+> — todos los subagentes (Explore/Plan/`docs-researcher`/…) corren en Sonnet heredando
+> `effortLevel: high` en vez de Haiku, para resúmenes y reportes de mayor calidad. El env var
+> tiene prioridad sobre el `model:` de cualquier agente; `ANTHROPIC_DEFAULT_HAIKU_MODEL` sube
+> además el modelo rápido usado en compactaciones. `scripts/check-subagent-model.sh` evita que
+> el frontmatter y el env var diverjan.
 
 ## Restaurar una máquina nueva
 

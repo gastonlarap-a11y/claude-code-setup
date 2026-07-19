@@ -20,6 +20,9 @@ Portable Claude Code configuration and the `dev-plugins` marketplace. Agent entr
   PowerShell lint on push (`validate.yml`); installer changes also trigger the
   real-execution smoke matrix (`installer-smoke.yml`, Linux + Windows PowerShell 5.1).
 - Global config lives in `global/` and reaches `~/.claude/` only via `install.sh`.
+- Subagent model is pinned by `env.CLAUDE_CODE_SUBAGENT_MODEL` (Sonnet) in
+  `global/settings.json`, which overrides any agent's `model:` frontmatter. Keep
+  `global/agents/*.md` in sync — `scripts/check-subagent-model.sh` enforces it in CI.
 - Token discipline: skill bodies and `references/` load on demand — keep descriptions sharp
   and short; CLAUDE.md-style content stays within the budgets defined in
   `global/skills/setup-project/SKILL.md`.
