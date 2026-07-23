@@ -29,10 +29,11 @@ Gather silently:
 
 Windows: running Claude Code needs no Git Bash (since 2.1.120 it falls back to the
 PowerShell tool). For a global restore there are two routes: `install.ps1` natively from
-PowerShell, or `install.sh` from Git Bash/WSL2. The bash-based hooks and statusline stay
-inert without Git for Windows (`winget install --id Git.Git -e`) — say so, everything else
-works. `jq`: `winget install --id jqlang.jq -e`. Project-only configuration needs none of
-this — skip the requirement for that route.
+PowerShell, or `install.sh` from Git Bash/WSL2. Hooks and statusline have native
+PowerShell ports — without bash, `install.ps1` wires the installed settings to the
+`.ps1` variants automatically. `jq`: `winget install --id jqlang.jq -e` (optional on
+native Windows — the `.ps1` ports parse JSON natively). Project-only configuration needs
+none of this — skip the requirement for that route.
 
 ## Phase 1 — Interview (only the gaps)
 
