@@ -15,7 +15,7 @@ if ($env:CLAUDE_HOME) { $Dest = $env:CLAUDE_HOME } else { $Dest = Join-Path $HOM
 # dry-run preview and by the orphan pruning after the real copy.
 $ManifestPath = Join-Path $Dest '.install-manifest'
 $GlobalRoot = Join-Path $Src 'global'
-$newManifest = @('CLAUDE.md', 'settings.json', 'statusline.sh')
+$newManifest = @('CLAUDE.md', 'settings.json', 'statusline.sh', 'statusline.ps1')
 foreach ($dir in 'skills', 'agents', 'hooks', 'rules') {
     $newManifest += Get-ChildItem -Path (Join-Path $GlobalRoot $dir) -Recurse -File |
         Where-Object { $_.Name -ne '.DS_Store' } |
@@ -28,12 +28,12 @@ Write-Host '  (owner-only: overwrites the global config; project setup lives in 
 
 if ($DryRun) {
     Write-Host 'DRY-RUN: nothing will be written.'
-    foreach ($item in 'CLAUDE.md', 'settings.json', 'statusline.sh', 'skills', 'agents', 'hooks', 'rules') {
+    foreach ($item in 'CLAUDE.md', 'settings.json', 'statusline.sh', 'statusline.ps1', 'skills', 'agents', 'hooks', 'rules') {
         if (Test-Path (Join-Path $Dest $item)) {
             Write-Host "  would back up: $item -> $Dest\.backup-<timestamp>\"
         }
     }
-    Write-Host "  would copy: global/{CLAUDE.md,settings.json,statusline.sh,skills,agents,hooks,rules} -> $Dest"
+    Write-Host "  would copy: global/{CLAUDE.md,settings.json,statusline.sh,statusline.ps1,skills,agents,hooks,rules} -> $Dest"
     if (Test-Path $ManifestPath) {
         foreach ($rel in Get-Content $ManifestPath) {
             if (-not $rel) { continue }
@@ -61,7 +61,7 @@ New-Item -ItemType Directory -Force -Path $Dest | Out-Null
 # --- Backup what this run will replace (last 3 backups kept) -------------------
 $Stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $Backup = Join-Path $Dest ".backup-$Stamp"
-foreach ($item in 'CLAUDE.md', 'settings.json', 'statusline.sh', 'skills', 'agents', 'hooks', 'rules') {
+foreach ($item in 'CLAUDE.md', 'settings.json', 'statusline.sh', 'statusline.ps1', 'skills', 'agents', 'hooks', 'rules') {
     $existing = Join-Path $Dest $item
     if (Test-Path $existing) {
         New-Item -ItemType Directory -Force -Path $Backup | Out-Null
@@ -81,6 +81,7 @@ foreach ($dir in 'skills', 'agents', 'hooks', 'rules') {
     Copy-Item (Join-Path $Src "global/$dir") $Dest -Recurse -Force
 }
 Copy-Item (Join-Path $Src 'global/statusline.sh') (Join-Path $Dest 'statusline.sh') -Force
+Copy-Item (Join-Path $Src 'global/statusline.ps1') (Join-Path $Dest 'statusline.ps1') -Force
 
 # --- Orphan pruning (manifest-listed paths ONLY - never unknown user files) ----
 # Files listed in a previous manifest but no longer shipped are removed, so
@@ -111,9 +112,28 @@ if (Test-Path $ManifestPath) {
 }
 [IO.File]::WriteAllText($ManifestPath, (($newManifest -join "`n") + "`n"))
 
-if (-not (Get-Command bash -ErrorAction SilentlyContinue)) {
-    Write-Warning ('bash not found: the bash-based hooks and statusline stay inert on this machine. ' +
-        'They activate if you install Git for Windows (optional): winget install --id Git.Git -e')
+# --- Hook/statusline wiring per OS ---------------------------------------------
+# With bash available (Git Bash/WSL) the bash wiring shipped in settings.json works as
+# is. Without bash (or with CLAUDE_FORCE_PS_HOOKS=1, used by the smoke matrix on CI
+# runners that DO have Git Bash), rewrite the installed copy to the native .ps1 ports.
+# String-level replace on purpose: a ConvertFrom/To-Json round-trip under PS 5.1
+# reformats the whole file and mangles non-ASCII; forward slashes in paths avoid JSON
+# backslash escaping and are accepted by powershell.exe -File.
+$UsePsHooks = ($env:CLAUDE_FORCE_PS_HOOKS -eq '1') -or (-not (Get-Command bash -ErrorAction SilentlyContinue))
+if ($UsePsHooks) {
+    $WiringPath = Join-Path $Dest 'settings.json'
+    $WiringText = [IO.File]::ReadAllText($WiringPath)
+    $HooksFwd = ((Join-Path $Dest 'hooks') -replace '\\', '/')
+    foreach ($hook in 'filter-test-output', 'guard-git-push', 'guard-git-add-all', 'format-on-edit', 'audit-config-change') {
+        $old = 'bash \"$HOME/.claude/hooks/' + $hook + '.sh\"'
+        $new = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"' + $HooksFwd + '/' + $hook + '.ps1\"'
+        $WiringText = $WiringText.Replace($old, $new)
+    }
+    $StatuslineFwd = ((Join-Path $Dest 'statusline.ps1') -replace '\\', '/')
+    $WiringText = $WiringText.Replace('~/.claude/statusline.sh',
+        'powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"' + $StatuslineFwd + '\"')
+    [IO.File]::WriteAllText($WiringPath, $WiringText)
+    Write-Host '  hooks/statusline: wired to the native PowerShell ports (bash not required)'
 }
 
 # --- Response language (CLAUDE_LANGUAGE, persisted machine-locally) ------------

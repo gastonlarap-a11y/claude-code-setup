@@ -107,5 +107,28 @@ if (-not $Home2Md.Contains('ALWAYS answer')) { Fail 'installed copy does not mat
 $json2 = [IO.File]::ReadAllText((Join-Path $env:CLAUDE_HOME 'settings.json')) | ConvertFrom-Json
 if ($json2.language -ne 'english') { Fail 'settings.json skipped (its own anchor was intact)' }
 
+Write-Host '== run 8: CLAUDE_FORCE_PS_HOOKS wires the native .ps1 ports =='
+# CI runners DO have Git Bash, so the no-bash path is exercised via the explicit override.
+$env:CLAUDE_HOME = Join-Path $T 'home'
+Remove-Item Env:CLAUDE_LANGUAGE -ErrorAction SilentlyContinue
+$env:CLAUDE_FORCE_PS_HOOKS = '1'
+& $Installer
+Remove-Item Env:CLAUDE_FORCE_PS_HOOKS
+$WiredText = [IO.File]::ReadAllText((Join-Path $env:CLAUDE_HOME 'settings.json'))
+if (-not $WiredText.Contains('guard-git-add-all.ps1')) { Fail 'hooks not rewired to .ps1' }
+if (-not $WiredText.Contains('statusline.ps1')) { Fail 'statusline not rewired to .ps1' }
+if ($WiredText.Contains('guard-git-add-all.sh')) { Fail 'stale bash hook wiring left behind' }
+$WiredText | ConvertFrom-Json | Out-Null
+if (-not (Test-Path (Join-Path $env:CLAUDE_HOME 'statusline.ps1'))) { Fail 'statusline.ps1 not copied' }
+# Execute the port for real: stdin JSON in, decision JSON out (child process so
+# [Console]::In sees the payload, same as when Claude Code invokes the hook).
+$GuardScript = Join-Path $env:CLAUDE_HOME 'hooks\guard-git-add-all.ps1'
+$denyOut = '{"tool_input":{"command":"git add -A"}}' |
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File $GuardScript | Out-String
+if (-not $denyOut.Contains('"permissionDecision": "deny"')) { Fail 'guard-git-add-all.ps1 did not deny git add -A' }
+$passOut = '{"tool_input":{"command":"git add src/main.go"}}' |
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File $GuardScript | Out-String
+if ($passOut.Trim() -ne '{}') { Fail 'guard-git-add-all.ps1 blocked targeted staging' }
+
 Remove-Item -Recurse -Force $T
-Write-Host 'SMOKE OK: all 7 runs passed (PowerShell)'
+Write-Host 'SMOKE OK: all 8 runs passed (PowerShell)'

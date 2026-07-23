@@ -53,15 +53,17 @@ jobs:
       # Static lint ONLY — runtime coverage for install.ps1 under real Windows
       # PowerShell 5.1 lives in installer-smoke.yml (smoke-windows-ps51 job).
       # Write-Host is intentional installer output, hence the excluded rule.
-      - name: PSScriptAnalyzer (install.ps1 + smoke script)
+      - name: PSScriptAnalyzer (installers, hook ports, statusline)
         shell: pwsh
         run: |
           if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
             Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
           }
           # -Path takes a single string; loop the scripts and collect findings.
+          $targets = @('./install.ps1', './scripts/installer-smoke.ps1', './global/statusline.ps1') +
+            @(Get-ChildItem './global/hooks/*.ps1' | ForEach-Object { $_.FullName })
           $findings = @()
-          foreach ($script in './install.ps1', './scripts/installer-smoke.ps1') {
+          foreach ($script in $targets) {
             $findings += Invoke-ScriptAnalyzer -Path $script `
               -Severity Warning, Error -ExcludeRule PSAvoidUsingWriteHost
           }
