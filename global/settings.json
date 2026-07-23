@@ -70,6 +70,11 @@
       "Edit(**/.env)",
       "Edit(**/.env.*)",
       "Edit(**/secrets.env)",
+      "Edit(.git/**)",
+      "Edit(**/package-lock.json)",
+      "Edit(**/pnpm-lock.yaml)",
+      "Edit(**/yarn.lock)",
+      "Edit(**/go.sum)",
       "Bash(*DROP DATABASE*:*)",
       "Bash(*DROP TABLE*:*)"
     ]
@@ -116,6 +121,11 @@
             "type": "command",
             "if": "Bash(git *)",
             "command": "bash \"$HOME/.claude/hooks/guard-git-push.sh\""
+          },
+          {
+            "type": "command",
+            "if": "Bash(git *)",
+            "command": "bash \"$HOME/.claude/hooks/guard-git-add-all.sh\""
           }
         ]
       }
@@ -127,6 +137,17 @@
           {
             "type": "command",
             "command": "bash \"$HOME/.claude/hooks/format-on-edit.sh\""
+          }
+        ]
+      }
+    ],
+    "ConfigChange": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/audit-config-change.sh\""
           }
         ]
       }

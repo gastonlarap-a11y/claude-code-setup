@@ -19,6 +19,11 @@ Rules:
 - Pin action versions to a major tag (`actions/checkout@v7`), never `@main`.
 - `permissions:` block at workflow level, least privilege (`contents: read` default).
 - Secrets via repo/environment secrets; never echo them; prefer OIDC federation over long-lived cloud keys.
+- **Secret scanning**: a `gitleaks/gitleaks-action@v3` step on every push (v2 is
+  deprecated — Node 20 leaves the runners Sept 2026; needs `fetch-depth: 0` to resolve
+  the pushed range; `GITLEAKS_LICENSE` only for org accounts), plus
+  `gitleaks protect --staged` as a local pre-commit where the team wants it — permission
+  deny rules on `.env*` are advisory; scanning is the enforced layer.
 
 ## Dependency caching per stack
 - **Node/pnpm**: `actions/setup-node@v6` with `cache: pnpm` (+ corepack enable).
@@ -44,4 +49,5 @@ Rules:
 2. Caches configured for the stack's package manager?
 3. `concurrency` + pinned action versions + least-privilege `permissions`?
 4. Deploy only from protected refs, secrets never printed?
-5. Is the workflow readable by someone new to the repo (job names, comments on non-obvious steps)?
+5. Secret scanning step (gitleaks) present?
+6. Is the workflow readable by someone new to the repo (job names, comments on non-obvious steps)?

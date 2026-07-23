@@ -4,13 +4,58 @@
 # OWNER-ONLY: this replaces ~/.claude (CLAUDE.md, settings, hooks, statusline) with the
 # owner's personal setup. To configure a single project or use only the plugins, do NOT
 # run this - see AGENT-PROJECT-SETUP.md instead.
+param([switch]$DryRun)  # -DryRun: print backup/copy/prune/language preview, write nothing
+
 $ErrorActionPreference = 'Continue'
 
 $Src = $PSScriptRoot
 if ($env:CLAUDE_HOME) { $Dest = $env:CLAUDE_HOME } else { $Dest = Join-Path $HOME '.claude' }
 
+# The manifest records exactly what the copy block ships; computed once, shared by the
+# dry-run preview and by the orphan pruning after the real copy.
+$ManifestPath = Join-Path $Dest '.install-manifest'
+$GlobalRoot = Join-Path $Src 'global'
+$newManifest = @('CLAUDE.md', 'settings.json', 'statusline.sh')
+foreach ($dir in 'skills', 'agents', 'hooks', 'rules') {
+    $newManifest += Get-ChildItem -Path (Join-Path $GlobalRoot $dir) -Recurse -File |
+        Where-Object { $_.Name -ne '.DS_Store' } |
+        ForEach-Object { $_.FullName.Substring($GlobalRoot.Length + 1) -replace '\\', '/' }
+}
+$newManifest = @($newManifest | Sort-Object)
+
 Write-Host "Restoring Claude Code config: $Src -> $Dest"
 Write-Host '  (owner-only: overwrites the global config; project setup lives in AGENT-PROJECT-SETUP.md)'
+
+if ($DryRun) {
+    Write-Host 'DRY-RUN: nothing will be written.'
+    foreach ($item in 'CLAUDE.md', 'settings.json', 'statusline.sh', 'skills', 'agents', 'hooks', 'rules') {
+        if (Test-Path (Join-Path $Dest $item)) {
+            Write-Host "  would back up: $item -> $Dest\.backup-<timestamp>\"
+        }
+    }
+    Write-Host "  would copy: global/{CLAUDE.md,settings.json,statusline.sh,skills,agents,hooks,rules} -> $Dest"
+    if (Test-Path $ManifestPath) {
+        foreach ($rel in Get-Content $ManifestPath) {
+            if (-not $rel) { continue }
+            if ($rel.StartsWith('/') -or $rel.Contains('..')) { continue }
+            if ($newManifest -notcontains $rel) {
+                Write-Host "  would prune (no longer shipped): $rel"
+            }
+        }
+    }
+    $LangPreview = ''
+    if ($env:CLAUDE_LANGUAGE) { $LangPreview = $env:CLAUDE_LANGUAGE }
+    elseif (Test-Path (Join-Path $Dest '.install-profile')) {
+        foreach ($line in Get-Content (Join-Path $Dest '.install-profile')) {
+            if ($line -match '^CLAUDE_LANGUAGE=(.+)$') { $LangPreview = $Matches[1] }
+        }
+    }
+    if (-not $LangPreview) { $LangPreview = 'spanish (default)' }
+    Write-Host "  would apply language: $LangPreview"
+    Write-Host '  would register: MCP servers from global/mcp-servers.json (user scope), dev-plugins marketplace, plugins from plugins.txt'
+    exit 0
+}
+
 New-Item -ItemType Directory -Force -Path $Dest | Out-Null
 
 # --- Backup what this run will replace (last 3 backups kept) -------------------
@@ -38,18 +83,10 @@ foreach ($dir in 'skills', 'agents', 'hooks', 'rules') {
 Copy-Item (Join-Path $Src 'global/statusline.sh') (Join-Path $Dest 'statusline.sh') -Force
 
 # --- Orphan pruning (manifest-listed paths ONLY - never unknown user files) ----
-# The manifest records exactly what the copy block above ships; files listed in a
-# previous manifest but no longer shipped are removed, so renamed/deleted skills
-# or rules stop loading into every session instead of lingering forever.
-$ManifestPath = Join-Path $Dest '.install-manifest'
-$GlobalRoot = Join-Path $Src 'global'
-$newManifest = @('CLAUDE.md', 'settings.json', 'statusline.sh')
-foreach ($dir in 'skills', 'agents', 'hooks', 'rules') {
-    $newManifest += Get-ChildItem -Path (Join-Path $GlobalRoot $dir) -Recurse -File |
-        Where-Object { $_.Name -ne '.DS_Store' } |
-        ForEach-Object { $_.FullName.Substring($GlobalRoot.Length + 1) -replace '\\', '/' }
-}
-$newManifest = @($newManifest | Sort-Object)
+# Files listed in a previous manifest but no longer shipped are removed, so
+# renamed/deleted skills or rules stop loading into every session instead of
+# lingering forever. ManifestPath/newManifest are computed at the top (shared with
+# the dry-run preview).
 if (Test-Path $ManifestPath) {
     foreach ($rel in Get-Content $ManifestPath) {
         if (-not $rel) { continue }
@@ -148,23 +185,35 @@ if (Test-Path $SecretsFile) {
 
 # --- MCP servers (user scope) + marketplace + plugins ------------------------
 if (Get-Command claude -ErrorAction SilentlyContinue) {
+    # Data-driven: every server in global/mcp-servers.json registers at user scope; each
+    # env var it declares resolves from secrets.env when present and is dropped when not
+    # (the server still registers, keyless). Adding a keyed server = one JSON entry + one
+    # secrets.env line, zero installer changes.
     $mcp = Get-Content (Join-Path $Src 'global/mcp-servers.json') -Raw | ConvertFrom-Json
-    $ctx7obj = $mcp.mcpServers.context7
-    $key = ''
-    if ($secrets.ContainsKey('CONTEXT7_API_KEY')) { $key = $secrets['CONTEXT7_API_KEY'] }
-    if ($key) { $ctx7obj.env.CONTEXT7_API_KEY = $key }
-    else { $ctx7obj.PSObject.Properties.Remove('env') }
-    $ctx7 = $ctx7obj | ConvertTo-Json -Depth 10 -Compress
-    # PS 5.1 does not escape embedded quotes when passing args to native commands.
-    $ctx7Arg = $ctx7 -replace '"', '\"'
-    # Remove-then-add so config/key updates take effect (add-json fails if it exists).
-    claude mcp remove context7 --scope user 2>&1 | Out-Null
-    claude mcp add-json context7 $ctx7Arg --scope user 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        if ($key) { Write-Host '  MCP: context7 registered (user scope, with API key)' }
-        else { Write-Host '  MCP: context7 registered (user scope, keyless - lower rate limits)' }
+    foreach ($entry in $mcp.mcpServers.PSObject.Properties) {
+        $name = $entry.Name
+        $server = $entry.Value
+        $keyState = 'keyless'
+        if ($server.PSObject.Properties['env']) {
+            foreach ($envKey in @($server.env.PSObject.Properties.Name)) {
+                if ($secrets.ContainsKey($envKey) -and $secrets[$envKey]) {
+                    $server.env.$envKey = $secrets[$envKey]
+                    $keyState = 'with API key'
+                } else {
+                    $server.env.PSObject.Properties.Remove($envKey)
+                }
+            }
+            if (-not @($server.env.PSObject.Properties).Count) { $server.PSObject.Properties.Remove('env') }
+        }
+        $serverJson = $server | ConvertTo-Json -Depth 10 -Compress
+        # PS 5.1 does not escape embedded quotes when passing args to native commands.
+        $serverArg = $serverJson -replace '"', '\"'
+        # Remove-then-add so config/key updates take effect (add-json fails if it exists).
+        claude mcp remove $name --scope user 2>&1 | Out-Null
+        claude mcp add-json $name $serverArg --scope user 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { Write-Host "  MCP: $name registered (user scope, $keyState)" }
+        else { Write-Host "  MCP: $name registration failed - check with 'claude mcp list'" }
     }
-    else { Write-Host "  MCP: context7 registration failed - check with 'claude mcp list'" }
 
     # Personal marketplace (this repo) - register or refresh, idempotent.
     claude plugin marketplace add $Src 2>&1 | Out-Null

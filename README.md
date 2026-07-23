@@ -30,9 +30,9 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | Ruta | Qué es | Para qué me sirve |
 |---|---|---|
 | `global/CLAUDE.md` | Instrucciones globales → `~/.claude/CLAUDE.md` | Reglas siempre activas: español/inglés, nunca asumir, investigar proactivamente, VCS por CLI (gh / az devops), autoría limpia |
-| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH), hooks, statusline, env (modelo de subagentes: Sonnet), qué plugins están activos |
+| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH, `.git/` y lockfiles), hooks, statusline, env (modelo de subagentes: Sonnet), qué plugins están activos |
 | `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart/java: cargan SOLO al tocar archivos de ese lenguaje |
-| `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-git-push.sh` (bloquea push directo a main/master) |
+| `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-git-push.sh` (bloquea push directo a main/master), `guard-git-add-all.sh` (bloquea staging masivo `-A`/`.`), `audit-config-change.sh` (auditoría de cambios de settings/skills → `~/.claude/config-audit.log`), `notify-os.sh` (notificaciones del SO, **opt-in** — snippet abajo) |
 | `global/statusline.sh` | Statusline → `~/.claude/statusline.sh` | Barra con % de contexto usado y % del límite 5h (necesita `jq`) |
 | `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) |
 | `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (sonnet): investiga docs en contexto aislado |
@@ -41,12 +41,13 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `plugins/` (stack) | `nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`, `dotnet` | Convenciones de arquitectura/testing/tooling por stack; flutter trae MCP oficial de Dart + LSP de Dart; los móviles traen `recipes`; dotnet trae EF Core + SQL Server local (OrbStack), Aspire, Azure y ruta de aprendizaje |
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil) — con `references/` que cargan solo si hacen falta |
 | `plugins.txt` / `install.sh` / `install.ps1` | Instalador (bash y PowerShell nativo) | Idempotente: respalda lo que va a reemplazar (`~/.claude/.backup-<ts>`, últimos 3), copia config, poda huérfanos vía manifest, aplica `CLAUDE_LANGUAGE`, registra marketplace, instala plugins. `install.ps1` = Windows sin Git Bash |
-| `.github/workflows/*.yml` + `scripts/check-*.sh` | CI del repo | En cada push: JSON lint, paridad de versiones (dual-bump) + sync de `enabledPlugins`, shellcheck, anclas de idioma, consistencia de modelo de subagentes, lint de PowerShell y `claude plugin validate --strict`; y smoke real de los installers (Linux + Windows PowerShell 5.1) cuando cambian |
+| `.github/workflows/*.yml` + `scripts/check-*.sh` | CI del repo | En cada push: JSON lint, paridad de versiones (dual-bump) + sync de `enabledPlugins`, gate de bump olvidado (ramas), shellcheck, anclas de idioma, consistencia de modelo de subagentes, validación de esqueletos de plantillas, escaneo de secretos (gitleaks), lint de PowerShell y `claude plugin validate --strict`; y smoke real de los installers (Linux + Windows PowerShell 5.1) cuando cambian |
 | `secrets.env(.example)` | Keys reales (gitignored) / plantilla | Los installers las inyectan directo en el registro MCP a nivel usuario (`~/.claude.json`, jamás commiteado) |
 | `START.md` | Bootstrap interactivo para agentes | Punto de entrada único: detecta el entorno, entrevista al usuario y enruta a la guía correcta (global, proyecto o ambos; owner o tercero; incluye Windows) |
 | `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración de MI máquina (sobreescribe `~/.claude/`) + verificación |
 | `AGENT-PROJECT-SETUP.md` | Guía en inglés para agentes | Configurar el proyecto de CUALQUIER persona usando este directorio, sin tocar su config global |
-| `CLAUDE.md` (raíz) | Contexto de este repo | Orienta a cualquier agente abierto aquí: entradas, reglas de edición y versionado de plugins |
+| `AGENTS.md` (raíz) | Contexto canónico de este repo (estándar cross-agente) | Orienta a cualquier agente abierto aquí: entradas, reglas de edición y versionado de plugins; lo leen también Codex/Cursor |
+| `CLAUDE.md` (raíz) | Shim de Claude Code | Importa `@AGENTS.md` y añade solo el delta específico de Claude (pinning del modelo de subagentes) |
 
 ## Cómo funciona
 
@@ -100,9 +101,18 @@ cp secrets.env.example secrets.env               # 3. rellena las keys reales
 bash install.sh                                  # 4. restaura todo (CLAUDE_LANGUAGE=<idioma> opcional;
                                                  #    respalda lo previo en ~/.claude/.backup-*)
                                                  #    Windows nativo: .\install.ps1
+                                                 #    Preview sin escribir: --dry-run / -DryRun
 ```
 
 Luego abre una sesión nueva y pasa la [verificación rápida](#verificación-rápida).
+
+**Hook opcional de notificaciones** (`notify-os.sh` se instala pero no se activa): para
+recibir avisos del SO cuando Claude espera permiso o input, añade a `~/.claude/settings.json`:
+
+```json
+"Notification": [{ "matcher": "permission_prompt|idle_prompt", "hooks": [
+  { "type": "command", "command": "bash \"$HOME/.claude/hooks/notify-os.sh\"" } ] }]
+```
 
 ## Configurar un proyecto (nuevo o existente)
 
@@ -114,7 +124,7 @@ Un solo comando para los tres casos — abre Claude Code en el repo y corre:
 
 | Caso | Qué hace el protocolo |
 |---|---|
-| **Proyecto nuevo** (recién inicializado) | Entrevista guiada paso a paso (propósito → stack → arquitectura → deploy/CI → testing), habilita los plugins que correspondan y genera `AGENTS.md` canónico (lo leen también Codex/Cursor/Gemini) + `CLAUDE.md` delgado (`@AGENTS.md`) + `.claude/` mínimos que fijan la arquitectura desde la primera sesión |
+| **Proyecto nuevo** (recién inicializado) | Entrevista guiada paso a paso (propósito → stack → arquitectura → deploy/CI → testing), habilita los plugins que correspondan y genera `AGENTS.md` canónico (lo leen nativo Codex/Cursor; Gemini CLI vía su ajuste `context.fileName`) + `CLAUDE.md` delgado (`@AGENTS.md`) + `.claude/` mínimos que fijan la arquitectura desde la primera sesión |
 | **Proyecto existente sin config de IA** | Deriva las convenciones DEL código real (módulos recientes, comandos verificados corriéndolos, CI) y las codifica en config token-lean adaptada a ese repo — nunca impone estilo ajeno |
 | **Proyecto con config de IA previa** (CLAUDE.md, AGENTS.md, .cursorrules, .claude/…) | Audita: mantiene lo que sirve, afina lo impreciso, mueve lo mal ubicado (procedimientos → skills, estilo por lenguaje → rules con `paths:`, garantías → permisos/hooks) y muestra TODO cambio antes de aplicarlo — jamás descarta en silencio |
 
@@ -199,6 +209,11 @@ claude plugin update <name>@dev-plugins
 # 5. Commit (Conventional, sin menciones de IA) y push — el CI repite la validación
 ```
 
+> Ayuda de autoría: el plugin oficial `skill-creator` (repo `anthropics/skills`) scaffoldea
+> y evalúa skills con la metodología oficial — `claude plugin marketplace add
+> anthropics/skills` y luego `claude plugin install skill-creator`. Preferirlo a construir
+> un meta-skill propio.
+
 ## Mantener el conocimiento al día
 
 - **Automejora del recetario**: `/refresh-knowledge` (opcional: `/refresh-knowledge flutter`) re-verifica recipes y references contra docs oficiales estables, actualiza lo obsoleto, sube versiones, republica y commitea. Córrelo ~1 vez al mes o cuando `research` marque drift.
@@ -208,7 +223,7 @@ claude plugin update <name>@dev-plugins
 cp ~/.claude/CLAUDE.md ~/.claude/settings.json global/ 2>/dev/null
 cp ~/.claude/statusline.sh global/ 2>/dev/null
 cp -R ~/.claude/skills ~/.claude/agents ~/.claude/hooks ~/.claude/rules global/
-git add -A && git commit -m "chore: sync claude config"
+git add global && git commit -m "chore: sync claude config"   # staging dirigido: el hook guard-git-add-all deniega add -A/.
 ```
 
 - Los plugins se editan SIEMPRE aquí (en `plugins/`), nunca en `~/.claude`.
@@ -258,6 +273,9 @@ mantiene esta lista al día:
   2x costo / 2.5x velocidad). `fallbackModel` (hasta 3 en cadena) ya configurado aquí.
 - **Skills/plugins**: `/reload-skills` sin reiniciar; skills de proyecto en `.claude/skills/` cargan
   sin marketplace (≥ 2.1.157); `claude plugin init` para scaffolding; `disallowed-tools` en frontmatter.
+- **MCP tool search**: los esquemas de herramientas MCP se difieren por defecto (cargan solo los
+  nombres; el schema completo llega al usarse) — añadir servidores MCP ya casi no cuesta contexto
+  inicial; `claude plugin details <name>` reporta el coste real por componente.
 - **Windows**: desde 2.1.120 no requiere Git Bash (usa PowerShell tool); instalador nativo recomendado.
 - **Equipo/nube**: `/team-onboarding` (empaqueta tu setup como guía replicable), Routines (agentes
   cloud programados desde la web), `claude agents` (vista de todas las sesiones).
@@ -274,7 +292,9 @@ En una sesión nueva: statusline visible con % de contexto · `/context` sin ski
 (en un dir neutro) · leer un `.go` carga `rules/go.md` · pedir leer `.env` → denegado ·
 `/research <pregunta>` responde con versión + fuente · `/setup-project` aparece en el
 menú `/` · `/sandbox` muestra la config resuelta (macOS/Linux/WSL2) · pedir `git push`
-estando en `main` → denegado por `guard-git-push.sh`.
+estando en `main` → denegado por `guard-git-push.sh` · pedir `git add -A` → denegado por
+`guard-git-add-all.sh` · editar `~/.claude/settings.json` desde fuera durante una sesión →
+línea nueva en `~/.claude/config-audit.log`.
 
 > Nota: la config por proyecto (`.claude/` y `CLAUDE.md` de cada repo) NO vive aquí —
 > viaja en el git de cada repositorio. Este repo aporta el protocolo que la genera y

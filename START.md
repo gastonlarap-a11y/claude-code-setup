@@ -19,7 +19,10 @@ Gather silently:
   `hooks/`, `rules/`, and whether they differ from this repo's `global/` (`diff -rq`).
   This feeds the Phase 2 overwrite summary.
 - **Other AI assistants**: machine-level config such as `~/.codex/`, `~/.cursor/`,
-  `~/.gemini/`, or a global `AGENTS.md` — report what exists; never touch it.
+  `~/.gemini/`, `~/.agents/` (cross-agent skills dir), or a global `AGENTS.md` — report
+  what exists; never touch it. Note: Gemini CLI stopped serving individual accounts on
+  2026-06-18 (successor: the closed-source Antigravity CLI), so `~/.gemini/` may be a
+  leftover — still report it.
 - **Secrets**: does `secrets.env` exist in this directory?
 - **Marketplace**: `claude plugin marketplace list` — is `dev-plugins` registered?
 - **Current directory**: are you inside this toolbox repo, or inside a target project?

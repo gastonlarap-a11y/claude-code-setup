@@ -326,6 +326,101 @@ offering, never from memory. Known caveat: `typescript-lsp` needs
 `typescript@7` (tsgo) preview — flag as incompatible there. Binary missing and not
 trivially installable → skip, with a one-line reason in the proposal.
 
+## Other-agent bridges (opt-in only)
+
+Generated only when the step-3 batched question confirms the team uses that agent —
+never by default. Harness-dependent details (paths, enums, event names) are verified via
+the `research` skill before writing: Codex ships near-daily and Gemini's successor
+(Antigravity CLI) may move things.
+
+### Shared skills directory (Codex + Gemini)
+
+Codex CLI and Gemini CLI read project skills from `.agents/skills/` (Gemini also from
+`.gemini/skills/`; within the same tier the `.agents/skills` alias wins). Claude Code
+reads `.claude/skills/` — bridge with a relative symlink, keeping `.claude/skills/`
+canonical:
+
+```bash
+ln -s .claude/skills .agents/skills   # from the repo root; commit the symlink
+```
+
+Windows teams: symlinks need admin rights or Developer Mode — document the command as a
+manual step in the README instead of creating it (same caveat as `ln -s AGENTS.md CLAUDE.md`).
+
+### .gemini/settings.json — make Gemini read AGENTS.md
+
+The entire Gemini bridge (Gemini CLI does not read `AGENTS.md` by default). Append
+`"GEMINI.md"` to the array only if the project already has one:
+
+```json
+{
+  "context": {
+    "fileName": ["AGENTS.md"]
+  }
+}
+```
+
+### .codex/config.toml — project-scope Codex defaults
+
+Loads only for trusted projects (`codex trust`). Project scope cannot set `notify`,
+`profiles` or `model_providers` (global-only keys); never set
+`model`/`model_reasoning_effort` here (personal preference, not shared config).
+`[profiles.x]` tables are removed syntax (Codex ≥ 0.134) — profiles live in separate
+`~/.codex/<name>.config.toml` files, out of project scope.
+
+```toml
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+# Mirror the .mcp.json entries the project relies on (Codex does not read .mcp.json).
+# Rename the example table to the real server name.
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp@latest"]
+```
+
+### .codex/hooks.json — only when mirroring a Claude Code guarantee
+
+Offer only when this same session generates the equivalent Claude Code hook (e.g. a
+formatter), so the two configs stay in lockstep instead of diverging. Codex event names
+are near-identical to Claude Code's; `matcher` is a regex; `timeout` is in seconds.
+
+```json
+{
+  "description": "Format on edit (mirrors the .claude/settings.json PostToolUse hook)",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "edit|write",
+        "hooks": [
+          { "type": "command", "command": "<verified formatter cmd>", "timeout": 60 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### AGENTS.override.md (rare)
+
+Codex reads `AGENTS.override.md` INSTEAD of the plain `AGENTS.md` at the same directory
+level. Offer only for a genuine per-agent conflict (e.g. a command one agent must never
+run); otherwise one shared `AGENTS.md` is always simpler.
+
+## Third-party due diligence (skills / plugins / MCP servers)
+
+Two risk tiers, applied before installing anything not already vetted:
+
+- **Official/curated** (`claude-plugins-official`, `anthropics/skills`, `dev-plugins`):
+  install after the compatibility check (required binary/toolchain present).
+- **Community/unvetted** (open marketplaces, arbitrary repos — ecosystem scans have found
+  roughly a third of community skills flawed and hundreds outright malicious): before
+  installing, (1) read every SKILL.md, hook and script it ships — they run with the
+  user's permissions; (2) check publisher identity and repo history; (3) prefer pinning
+  to a commit SHA over a moving tag; (4) after enabling, run
+  `claude plugin details <name>` to audit its context cost. User declines the review →
+  do not install.
+
 ## .gitignore additions
 
 ```

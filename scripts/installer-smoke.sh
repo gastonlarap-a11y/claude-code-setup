@@ -57,7 +57,21 @@ diff -r "$CLAUDE_HOME/skills/setup-project" "$REPO/global/skills/setup-project" 
   || fail "installed skills differ from the repo sources"
 jq empty "$CLAUDE_HOME/settings.json" || fail "settings.json no longer valid JSON"
 
-echo "== run 6: FAILURE PATH — anchor mutated in the SOURCE kit =="
+echo "== run 6: --dry-run previews and writes nothing =="
+before_settings="$(cat "$CLAUDE_HOME/settings.json")"
+before_manifest="$(cat "$CLAUDE_HOME/.install-manifest")"
+before_backups="$(find "$CLAUDE_HOME" -maxdepth 1 -name '.backup-*' -type d | wc -l | tr -d ' ')"
+PATH="$SAFE_PATH" bash "$REPO/install.sh" --dry-run > "$T/dryrun.log" 2>&1 || fail "--dry-run exited non-zero"
+grep -q 'DRY-RUN' "$T/dryrun.log" || fail "--dry-run banner missing"
+[ "$before_settings" = "$(cat "$CLAUDE_HOME/settings.json")" ] || fail "--dry-run modified settings.json"
+[ "$before_manifest" = "$(cat "$CLAUDE_HOME/.install-manifest")" ] || fail "--dry-run modified the manifest"
+after_backups="$(find "$CLAUDE_HOME" -maxdepth 1 -name '.backup-*' -type d | wc -l | tr -d ' ')"
+[ "$before_backups" = "$after_backups" ] || fail "--dry-run created a backup"
+if PATH="$SAFE_PATH" bash "$REPO/install.sh" --nope >/dev/null 2>&1; then
+  fail "unknown option accepted"
+fi
+
+echo "== run 7: FAILURE PATH — anchor mutated in the SOURCE kit =="
 # The real-world failure vector is a reworded source file (a mutated installed copy is
 # simply overwritten by the next run), so the guard is exercised on a temp kit copy.
 KIT="$T/kit"
@@ -81,4 +95,4 @@ if grep -qF 'answer **in English**' "$CLAUDE_HOME/CLAUDE.md"; then
 fi
 grep -qF 'ALWAYS answer' "$CLAUDE_HOME/CLAUDE.md" || fail "installed copy does not match the mutated source"
 
-echo "SMOKE OK: all 6 runs passed"
+echo "SMOKE OK: all 7 runs passed"
