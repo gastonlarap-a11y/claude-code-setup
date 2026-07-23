@@ -37,6 +37,7 @@ Run:
 
 ```bash
 bash install.sh        # native Windows: .\install.ps1 from PowerShell
+                       # preview without writing: bash install.sh --dry-run  /  .\install.ps1 -DryRun
 ```
 
 Response language: pass `CLAUDE_LANGUAGE=<language>` (default `spanish`) — the installer
@@ -55,12 +56,15 @@ This does, idempotently:
    no longer in the repo are removed (manifest-listed paths only — user files survive).
 4. Applies `CLAUDE_LANGUAGE` (if set or persisted) to the copied `settings.json` and
    `CLAUDE.md` — see "Response language" above.
-5. Sources `secrets.env` and injects `CONTEXT7_API_KEY` directly into the `context7` MCP
-   registration at user scope (`~/.claude.json` — machine-local, never committed). Without
-   secrets, context7 registers keyless (lower rate limits) and `/doctor` stays clean.
+5. Sources `secrets.env` and resolves, data-driven, every env var declared by the servers
+   in `global/mcp-servers.json` (today: `CONTEXT7_API_KEY` for `context7`) directly into
+   their user-scope MCP registrations (`~/.claude.json` — machine-local, never committed).
+   Missing keys just drop: the server registers keyless (context7: lower rate limits) and
+   `/doctor` stays clean. Adding a keyed server = one JSON entry + one `secrets.env` line,
+   zero installer changes.
    Note: a user-level `settings.local.json` env block is NOT read by Claude Code — the
    `${VAR}` placeholders in MCP configs expand from the process environment only.
-6. (Re-)registers `context7` (`claude mcp remove` + `add-json`), so key/config updates
+6. (Re-)registers each server (`claude mcp remove` + `add-json`), so key/config updates
    take effect on re-runs.
 7. Registers this repo as the `dev-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
@@ -92,6 +96,10 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
   (macOS/Linux/WSL2; on native Windows a "sandbox unavailable" warning is expected).
 - In a scratch repo on `main`, asking for `git push` must be denied by `guard-git-push.sh`;
   on a feature branch it goes through.
+- Asking for `git add -A` (any repo) must be denied by `guard-git-add-all.sh`; staging
+  specific paths goes through.
+- Editing `~/.claude/settings.json` from OUTSIDE the session while one runs must append a
+  line to `~/.claude/config-audit.log` (ConfigChange audit hook).
 
 ## 4. Per-project configuration (tell the user)
 The primary flow is `/setup-project` inside each repo (new, legacy, or already configured):
@@ -141,9 +149,9 @@ teammate's machine): follow `AGENT-PROJECT-SETUP.md` instead of this file.
   `~/.claude/.install-manifest` (copied-file list used to prune renamed/removed items).
 - Uninstall: delete the paths listed in `~/.claude/.install-manifest` plus the
   `.install-*` and `.backup-*` entries; then `claude plugin marketplace remove
-  dev-plugins`, uninstall the `plugins.txt` plugins, and
-  `claude mcp remove context7 --scope user`. Anything not in the manifest was not created
-  by the installer — leave it.
+  dev-plugins`, uninstall the `plugins.txt` plugins, and remove each server declared in
+  `global/mcp-servers.json` (`claude mcp remove <name> --scope user`). Anything not in the
+  manifest was not created by the installer — leave it.
 
 ## Notes
 - Commits in this repo (and everywhere): NO `Co-Authored-By` trailers, no AI attribution.
