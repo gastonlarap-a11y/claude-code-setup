@@ -8,7 +8,10 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
+      # Full history so the version-bump gate can diff feature branches against main.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: JSON well-formedness
         run: |
@@ -21,6 +24,12 @@ jobs:
       - name: Version parity (dual-bump rule)
         run: bash scripts/check-versions.sh
 
+      # Feature branches only: a plugin change without its version bump fails before the
+      # PR merges; on main the diff is empty by definition.
+      - name: Plugin version bumped when plugin changed
+        if: github.ref != 'refs/heads/main'
+        run: bash scripts/check-plugin-version-bump.sh origin/main
+
       - name: shellcheck
         run: shellcheck install.sh scripts/*.sh global/hooks/*.sh global/statusline.sh
 
@@ -29,6 +38,17 @@ jobs:
 
       - name: Subagent model consistency (frontmatter vs CLAUDE_CODE_SUBAGENT_MODEL)
         run: bash scripts/check-subagent-model.sh
+
+      - name: Template skeletons are valid config (setup-project references)
+        run: bash scripts/check-templates.sh
+
+      # v3 (v2 is deprecated: Node 20 leaves GitHub runners Sept 2026). On push events it
+      # scans only the pushed commit range — the fetch-depth: 0 checkout above lets that
+      # range resolve. GITLEAKS_LICENSE is only needed for organization accounts.
+      - name: Secret scanning (gitleaks)
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Static lint ONLY — runtime coverage for install.ps1 under real Windows
       # PowerShell 5.1 lives in installer-smoke.yml (smoke-windows-ps51 job).
