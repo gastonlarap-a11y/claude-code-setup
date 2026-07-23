@@ -46,9 +46,11 @@ Hard rules:
   present: top-level areas, import/dependency direction, where domain logic vs transport/IO
   lives. Feeds the step-3 principle selection.
 - **Existing AI config** (full inventory): `CLAUDE.md`, `CLAUDE.local.md`, `.claude/**`
-  (settings, rules, skills, hooks, agents, commands), `AGENTS.md`, `.cursorrules`,
-  `.cursor/rules/`, `.windsurfrules`, `.github/copilot-instructions.md`, `.mcp.json`,
-  nested `CLAUDE.md` files in subdirectories.
+  (settings, rules, skills, hooks, agents, commands), `AGENTS.md` (+ nested ones and
+  `AGENTS.override.md`), `.agents/skills/`, `GEMINI.md`, `.gemini/` (settings, commands,
+  skills), `.codex/` (config.toml, hooks.json, agents, skills), `.cursorrules`,
+  `.cursor/rules/`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`,
+  `.mcp.json`, nested `CLAUDE.md` files in subdirectories.
 - **Ecosystem**: `claude plugin marketplace list` (is `dev-plugins` or another relevant
   marketplace registered?), `claude plugin list`, `claude mcp list`.
 - **Docs**: README/ARCHITECTURE/CONTRIBUTING — read them; config points to them, never
@@ -72,7 +74,9 @@ keep / tighten / move / add / retire — retire is always shown to the user, nev
   ≤ ~60 lines for a typical repo (hard cap 150; official guidance
   is < 200). Only always-true, always-needed facts: what the project is, layout map,
   verified commands, hard do/don'ts. Litmus test per line: *would removing it cause Claude
-  to make mistakes? If not, cut it.* Never include: what reading the code already shows,
+  to make mistakes? If not, cut it.* Include only the official best-practices categories:
+  non-guessable commands, non-default style rules, testing instructions, repo etiquette,
+  env quirks, architectural decisions. Never include: what reading the code already shows,
   standard conventions of the language, or information that changes frequently.
 - **Placement** — the core efficiency move; wrong placement is what wastes tokens:
   - language/area-specific guidance → `.claude/rules/<topic>.md` with `paths:` globs
@@ -87,6 +91,8 @@ keep / tighten / move / add / retire — retire is always shown to the user, nev
 - **Other-tool configs**: `AGENTS.md` present → root CLAUDE.md becomes `@AGENTS.md` import
   plus Claude-specific deltas below it (one shared source for all agents). `.cursorrules`
   & co. → merge their still-true content into the shared files; leave the originals alone.
+  `GEMINI.md` present → same merge into the shared file, and offer the
+  `.gemini/settings.json` bridge (templates § Other-agent bridges) so Gemini reads it.
 - **Coverage gaps**: missing test/lint/build commands, no architecture map, routine commands
   not pre-approved in permissions, secrets not deny-listed, generated/vendored dirs not
   read-blocked.
@@ -100,9 +106,11 @@ Compose only from what the project actually needs — a missing section beats a 
 one. Skeletons for every block: `references/templates.md` (read it before writing files).
 
 Universal baseline — applied to every project, no analysis or question needed: permissions
-`deny` for secrets and generated/vendored reads, `ask` for pushes/migrations, gitignored
-local config (`CLAUDE.local.md`, `.claude/settings.local.json`), the step-6 maintenance
-block, the engineering-standards block, and an accurate README. Everything else below is
+`deny` for secrets and generated/vendored reads (paired with gitleaks in CI when a
+workflow exists — see the `ci-cd` skill; deny rules alone are advisory), `ask` for
+pushes/migrations, gitignored local config (`CLAUDE.local.md`,
+`.claude/settings.local.json`), the step-6 maintenance block, the engineering-standards
+block, and an accurate README. Everything else below is
 derived from the repo's own evidence.
 
 | Block | Contents | Budget |
@@ -140,7 +148,9 @@ before writing — never from memory; `references/templates.md` is the starting 
 the authority.
 
 Canonical file: with no existing instruction file, generate `AGENTS.md` (the cross-agent
-standard — Codex, Cursor and Gemini CLI read it too) plus the thin `CLAUDE.md` that imports
+standard — Codex and Cursor read it natively; Gemini CLI reads it only via its one-line
+`context.fileName` bridge, skeleton in templates § Other-agent bridges) plus the thin
+`CLAUDE.md` that imports
 it. A project that already has CLAUDE.md-only keeps CLAUDE.md canonical (full content, as
 before) — offer the AGENTS.md split as optional in step 4, never forced. `AGENTS.md` already
 present → the step-2 rule applies (import + deltas).
@@ -191,6 +201,11 @@ Go service → `go` · Android → `android-kotlin` · Next.js → `react-nextjs
 mobile, any framework) → `ux`. The official code-intelligence (LSP) plugin for the
 project's language goes through the compatibility-checked batched question below.
 
+Third-party additions (skills, plugins, MCP servers) follow a two-tier rule:
+official/curated marketplaces install after the compatibility check; community/unvetted
+sources require the checklist in templates § Third-party due diligence first — never
+auto-install from an unvetted source.
+
 Stack without a matching plugin, or no marketplace available: encode the equivalent
 essentials as local `.claude/rules/` + `.claude/skills/` instead — derived from this
 project's code first, completed via the `research` skill (or official docs) only for gaps.
@@ -238,6 +253,17 @@ new-project interview already settled:
   templates.md — e.g. typescript-lsp needs tsserver, absent under tsgo).
 - Deploy procedure in the roadmap but not built yet → create the deploy skill now marked
   "pending validation", or defer until it exists.
+- Signs the team also uses other agent CLIs (`.codex/`, `.gemini/`, `GEMINI.md`,
+  `.agents/`, or the user says so) → offer the other-agent bridges
+  (templates § Other-agent bridges): `.agents/skills` symlink, `.gemini/settings.json`
+  context bridge, `.codex/config.toml` (+ `.codex/hooks.json` only when mirroring a
+  guarantee generated for Claude Code in this same session). Opt-in, asked once, never
+  generated silently.
+- GitHub remote and no `github` MCP server registered → offer the official GitHub MCP
+  (tool search defers schemas, so its idle context cost is near zero).
+- Browser-testable UI (Next.js / React Native / Flutter web) →
+  offer `playwright@claude-plugins-official`. Auth/payments/PII surface → offer
+  `security-guidance@claude-plugins-official`.
 - Brand-new project → README language.
 - .NET only → unix-first (`Makefile`) or Windows-first (`scripts/*.ps1`) team.
 
@@ -262,6 +288,8 @@ approved.
 - `wc -l` per file within budget; report total always-loaded lines (CLAUDE.md + imported
   AGENTS.md + unscoped rules) before vs after.
 - `.gitignore` covers `CLAUDE.local.md`, `.claude/settings.local.json` and secret files.
+- Bridges, if generated: the `.agents/skills` symlink resolves, and
+  `.gemini/settings.json` / `.codex/config.toml` / `.codex/hooks.json` parse cleanly.
 - `/doctor` reports no configuration issues for the project.
 - Tell the user to open a fresh session and check `/context` (real cost) and that routine
   commands no longer prompt for permission; after a few days, `/usage` shows which skills,
@@ -306,5 +334,6 @@ The re-audit also refreshes the project's maintenance block to the current versi
 
 In the user's language: files created/changed with line counts (naming which file is
 canonical — AGENTS.md or CLAUDE.md), README created/updated
-(which sections), what was preserved from the pre-existing config, plugins enabled, each
-verified command with its real result, and the always-loaded context total vs before.
+(which sections), what was preserved from the pre-existing config, plugins enabled,
+other-agent bridges generated (if any), each verified command with its real result, and
+the always-loaded context total vs before.
