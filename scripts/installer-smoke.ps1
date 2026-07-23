@@ -67,7 +67,22 @@ if ($backups.Count -gt 3) { Fail "more than 3 backups kept ($($backups.Count))" 
 if ($backups.Count -lt 1) { Fail 'expected at least one backup' }
 [IO.File]::ReadAllText($SettingsPath) | ConvertFrom-Json | Out-Null
 
-Write-Host '== run 6: FAILURE PATH - anchor mutated in the SOURCE kit =='
+Write-Host '== run 6: -DryRun previews and writes nothing =='
+$ManifestFile = Join-Path $env:CLAUDE_HOME '.install-manifest'
+$BeforeSettings = [IO.File]::ReadAllText($SettingsPath)
+$BeforeManifest = [IO.File]::ReadAllText($ManifestFile)
+$BeforeBackups = @(Get-ChildItem -Path $env:CLAUDE_HOME -Directory -Filter '.backup-*' -Force).Count
+# Write-Host output lives in the information stream: merge it (6>&1) to capture the banner.
+$DryLog = & $Installer -DryRun 6>&1 | Out-String
+if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) { Fail '-DryRun exited non-zero' }
+if (-not $DryLog.Contains('DRY-RUN')) { Fail '-DryRun banner missing' }
+if ($BeforeSettings -ne [IO.File]::ReadAllText($SettingsPath)) { Fail '-DryRun modified settings.json' }
+if ($BeforeManifest -ne [IO.File]::ReadAllText($ManifestFile)) { Fail '-DryRun modified the manifest' }
+if (@(Get-ChildItem -Path $env:CLAUDE_HOME -Directory -Filter '.backup-*' -Force).Count -ne $BeforeBackups) {
+    Fail '-DryRun created a backup'
+}
+
+Write-Host '== run 7: FAILURE PATH - anchor mutated in the SOURCE kit =='
 # The real-world failure vector is a reworded source file (a mutated installed copy is
 # simply overwritten by the next run), so the guard is exercised on a temp kit copy.
 $Kit = Join-Path $T 'kit'
@@ -93,4 +108,4 @@ $json2 = [IO.File]::ReadAllText((Join-Path $env:CLAUDE_HOME 'settings.json')) | 
 if ($json2.language -ne 'english') { Fail 'settings.json skipped (its own anchor was intact)' }
 
 Remove-Item -Recurse -Force $T
-Write-Host 'SMOKE OK: all 6 runs passed (PowerShell)'
+Write-Host 'SMOKE OK: all 7 runs passed (PowerShell)'

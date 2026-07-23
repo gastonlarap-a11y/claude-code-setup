@@ -9,8 +9,48 @@ set -euo pipefail
 SRC="$(cd "$(dirname "$0")" && pwd)"
 DEST="${CLAUDE_HOME:-$HOME/.claude}"
 
+DRY_RUN=0
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY_RUN=1 ;;
+    *) echo "Unknown option: $arg (supported: --dry-run)"; exit 2 ;;
+  esac
+done
+
+# The manifest records exactly what the copy block ships; computed once, shared by the
+# dry-run preview and by the orphan pruning after the real copy.
+MANIFEST="$DEST/.install-manifest"
+new_manifest="$( (cd "$SRC/global" && find CLAUDE.md settings.json statusline.sh skills agents hooks rules -type f ! -name '.DS_Store') | LC_ALL=C sort )"
+
 echo "Restoring Claude Code config: $SRC -> $DEST"
 echo "  (owner-only: overwrites the global config; project setup lives in AGENT-PROJECT-SETUP.md)"
+
+if [ "$DRY_RUN" -eq 1 ]; then
+  echo "DRY-RUN: nothing will be written."
+  for item in CLAUDE.md settings.json statusline.sh skills agents hooks rules; do
+    if [ -e "$DEST/$item" ]; then
+      echo "  would back up: $item -> $DEST/.backup-<timestamp>/"
+    fi
+  done
+  echo "  would copy: global/{CLAUDE.md,settings.json,statusline.sh,skills,agents,hooks,rules} -> $DEST"
+  if [ -f "$MANIFEST" ]; then
+    while IFS= read -r rel; do
+      if [ -z "$rel" ]; then continue; fi
+      case "$rel" in /*|*..*) continue ;; esac
+      if ! printf '%s\n' "$new_manifest" | grep -Fxq "$rel"; then
+        echo "  would prune (no longer shipped): $rel"
+      fi
+    done < "$MANIFEST"
+  fi
+  lang_preview="${CLAUDE_LANGUAGE:-}"
+  if [ -z "$lang_preview" ] && [ -f "$DEST/.install-profile" ]; then
+    lang_preview="$(sed -n 's/^CLAUDE_LANGUAGE=//p' "$DEST/.install-profile" | tail -n 1)"
+  fi
+  echo "  would apply language: ${lang_preview:-spanish (default)}"
+  echo "  would register: MCP servers from global/mcp-servers.json (user scope), dev-plugins marketplace, plugins from plugins.txt"
+  exit 0
+fi
+
 mkdir -p "$DEST"
 
 # --- Backup what this run will replace (last 3 backups kept) -------------------
@@ -39,11 +79,10 @@ chmod +x "$DEST/hooks/"*.sh "$DEST/statusline.sh"
 find "$DEST/skills" "$DEST/agents" "$DEST/hooks" "$DEST/rules" -name ".DS_Store" -delete 2>/dev/null || true
 
 # --- Orphan pruning (manifest-listed paths ONLY — never unknown user files) ----
-# The manifest records exactly what the copy block above ships; files listed in a
-# previous manifest but no longer shipped are removed, so renamed/deleted skills
-# or rules stop loading into every session instead of lingering forever.
-MANIFEST="$DEST/.install-manifest"
-new_manifest="$( (cd "$SRC/global" && find CLAUDE.md settings.json statusline.sh skills agents hooks rules -type f ! -name '.DS_Store') | LC_ALL=C sort )"
+# Files listed in a previous manifest but no longer shipped are removed, so
+# renamed/deleted skills or rules stop loading into every session instead of
+# lingering forever. MANIFEST/new_manifest are computed at the top (shared with the
+# dry-run preview).
 if [ -f "$MANIFEST" ]; then
   while IFS= read -r rel; do
     if [ -z "$rel" ]; then continue; fi
@@ -117,8 +156,11 @@ fi
 # settings.local.json is NOT read by Claude Code (only project-level is) — never
 # rely on an env block there.
 if [ -f "$SRC/secrets.env" ]; then
+  # set -a: exported so the python JSON resolver below sees the keys too.
+  set -a
   # shellcheck disable=SC1091
   source "$SRC/secrets.env"
+  set +a
 else
   echo "  WARNING: secrets.env not found — context7 will be registered keyless (lower rate limits)."
   echo "           Copy secrets.env.example to secrets.env and re-run to add the key."
@@ -126,38 +168,58 @@ fi
 
 # --- MCP servers (user scope) + plugins --------------------------------------
 if command -v claude >/dev/null 2>&1; then
-  key="${CONTEXT7_API_KEY:-}"
+  # Data-driven: every server in global/mcp-servers.json registers at user scope; each
+  # env var it declares resolves from secrets.env when present and is dropped when not
+  # (the server still registers, keyless). Adding a keyed server = one JSON entry + one
+  # secrets.env line, zero installer changes.
   if command -v jq >/dev/null 2>&1; then
-    ctx7_json="$(jq -c --arg k "$key" \
-      '.mcpServers.context7 | if $k != "" then .env.CONTEXT7_API_KEY = $k else del(.env) end' \
-      "$SRC/global/mcp-servers.json")"
+    server_names="$(jq -r '.mcpServers | keys[]' "$SRC/global/mcp-servers.json")"
   elif [ -n "$PY" ]; then
-    ctx7_json="$(CTX7_KEY="$key" "$PY" -c "
-import json, os
-d = json.load(open('$SRC/global/mcp-servers.json'))['mcpServers']['context7']
-k = os.environ.get('CTX7_KEY', '')
-if k:
-    d.setdefault('env', {})['CONTEXT7_API_KEY'] = k
-else:
-    d.pop('env', None)
-print(json.dumps(d))")"
+    server_names="$("$PY" -c "
+import json
+print('\n'.join(json.load(open('$SRC/global/mcp-servers.json'))['mcpServers']))")"
   else
-    ctx7_json=""
-    echo "  WARNING: neither jq nor python found — register context7 manually: claude mcp add-json context7 '<json from global/mcp-servers.json, with your real key in env>' --scope user"
+    server_names=""
+    echo "  WARNING: neither jq nor python found — register MCP servers manually: claude mcp add-json <name> '<json from global/mcp-servers.json, with your real keys in env>' --scope user"
   fi
-  if [ -n "$ctx7_json" ]; then
-    # Remove-then-add so config/key updates take effect (add-json fails if it exists).
-    claude mcp remove context7 --scope user >/dev/null 2>&1 || true
-    if claude mcp add-json context7 "$ctx7_json" --scope user 2>/dev/null; then
-      if [ -n "$key" ]; then
-        echo "  MCP: context7 registered (user scope, with API key)"
-      else
-        echo "  MCP: context7 registered (user scope, keyless — lower rate limits)"
-      fi
+  while IFS= read -r name; do
+    if [ -z "$name" ]; then continue; fi
+    if command -v jq >/dev/null 2>&1; then
+      server_json="$(jq -c --arg n "$name" '.mcpServers[$n]' "$SRC/global/mcp-servers.json")"
+      while IFS= read -r envkey; do
+        if [ -z "$envkey" ]; then continue; fi
+        val="${!envkey:-}"
+        if [ -n "$val" ]; then
+          server_json="$(printf '%s' "$server_json" | jq -c --arg k "$envkey" --arg v "$val" '.env[$k] = $v')"
+        else
+          server_json="$(printf '%s' "$server_json" | jq -c --arg k "$envkey" 'del(.env[$k])')"
+        fi
+      done < <(jq -r --arg n "$name" '.mcpServers[$n].env // {} | keys[]' "$SRC/global/mcp-servers.json")
+      server_json="$(printf '%s' "$server_json" | jq -c 'if (.env // {}) == {} then del(.env) else . end')"
     else
-      echo "  MCP: context7 registration failed — check with 'claude mcp list'"
+      server_json="$(MCP_NAME="$name" "$PY" -c "
+import json, os
+s = json.load(open('$SRC/global/mcp-servers.json'))['mcpServers'][os.environ['MCP_NAME']]
+env = s.get('env') or {}
+resolved = {k: os.environ[k] for k in env if os.environ.get(k)}
+if resolved:
+    s['env'] = resolved
+else:
+    s.pop('env', None)
+print(json.dumps(s))")"
     fi
-  fi
+    case "$server_json" in
+      *'"env"'*) key_state="with API key" ;;
+      *) key_state="keyless" ;;
+    esac
+    # Remove-then-add so config/key updates take effect (add-json fails if it exists).
+    claude mcp remove "$name" --scope user >/dev/null 2>&1 || true
+    if claude mcp add-json "$name" "$server_json" --scope user 2>/dev/null; then
+      echo "  MCP: $name registered (user scope, $key_state)"
+    else
+      echo "  MCP: $name registration failed — check with 'claude mcp list'"
+    fi
+  done <<< "$server_names"
 
   # Personal marketplace (this repo) — register or refresh, idempotent.
   # shellcheck disable=SC2015  # echo as the && branch cannot fail
