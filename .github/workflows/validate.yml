@@ -64,8 +64,12 @@ jobs:
             @(Get-ChildItem './global/hooks/*.ps1' | ForEach-Object { $_.FullName })
           $findings = @()
           foreach ($script in $targets) {
+            $exclude = @('PSAvoidUsingWriteHost')
+            # Hook ports and statusline are fail-open by design: empty catch blocks are
+            # the contract (degrade silently, never break the hook). Installers keep the rule.
+            if ($script -match 'hooks|statusline') { $exclude += 'PSAvoidUsingEmptyCatchBlock' }
             $findings += Invoke-ScriptAnalyzer -Path $script `
-              -Severity Warning, Error -ExcludeRule PSAvoidUsingWriteHost
+              -Severity Warning, Error -ExcludeRule $exclude
           }
           if ($findings) {
             $findings | Format-Table -AutoSize | Out-String | Write-Host
