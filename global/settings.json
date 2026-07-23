@@ -96,9 +96,6 @@
       "files": [
         { "path": "~/.ssh", "mode": "deny" },
         { "path": "~/.aws", "mode": "deny" }
-      ],
-      "envVars": [
-        { "name": "CONTEXT7_API_KEY", "mode": "deny" }
       ]
     },
     "excludedCommands": ["docker *", "gh *", "kubectl *"]

@@ -34,6 +34,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
   the rewrite and executes a port for real.
 - `LICENSE` (MIT) and this `CHANGELOG.md`.
 
+### Removed
+- context7 MCP server (user decision: no freemium services in the config): the
+  `research` skill and the `docs-researcher` agent now work exclusively against official
+  docs on the web (WebSearch/WebFetch — previously the fallback). The data-driven
+  MCP+secrets installer mechanism stays, empty, for future servers.
+
 ### Changed
 - `setup-project` now ALWAYS asks which agent CLIs to configure (Codex CLI / Gemini CLI /
   none) in the batched questions — repo signs only pre-fill the suggested answer; bridges

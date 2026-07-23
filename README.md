@@ -37,13 +37,13 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `global/statusline.sh` / `.ps1` | Statusline → `~/.claude/` | Barra con % de contexto usado y % del límite 5h (la variante bash necesita `jq`; el puerto PowerShell no) |
 | `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) |
 | `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (sonnet): investiga docs en contexto aislado |
-| `global/mcp-servers.json` | Definición MCP | context7 (docs de librerías), key vía `secrets.env` |
+| `global/mcp-servers.json` | Definición MCP (data-driven) | Hoy vacío por decisión (sin servicios freemium): cualquier server que se añada aquí lo registran los installers a nivel usuario, resolviendo sus keys desde `secrets.env` |
 | `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 12 plugins con `defaultEnabled: false` |
 | `plugins/` (stack) | `nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`, `dotnet` | Convenciones de arquitectura/testing/tooling por stack; flutter trae MCP oficial de Dart + LSP de Dart; los móviles traen `recipes`; dotnet trae EF Core + SQL Server local (OrbStack), Aspire, Azure y ruta de aprendizaje |
 | `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil) — con `references/` que cargan solo si hacen falta |
 | `plugins.txt` / `install.sh` / `install.ps1` | Instalador (bash y PowerShell nativo) | Idempotente: respalda lo que va a reemplazar (`~/.claude/.backup-<ts>`, últimos 3), copia config, poda huérfanos vía manifest, aplica `CLAUDE_LANGUAGE`, registra marketplace, instala plugins. `install.ps1` = Windows sin Git Bash |
 | `.github/workflows/*.yml` + `scripts/check-*.sh` | CI del repo | En cada push: JSON lint, paridad de versiones (dual-bump) + sync de `enabledPlugins`, gate de bump olvidado (ramas), shellcheck, anclas de idioma, consistencia de modelo de subagentes, validación de esqueletos de plantillas, escaneo de secretos (gitleaks), lint de PowerShell y `claude plugin validate --strict`; y smoke real de los installers (Linux + Windows PowerShell 5.1) cuando cambian |
-| `secrets.env(.example)` | Keys reales (gitignored) / plantilla | Los installers las inyectan directo en el registro MCP a nivel usuario (`~/.claude.json`, jamás commiteado) |
+| `secrets.env(.example)` | Keys reales (gitignored) / plantilla | Hoy sin keys; cuando un server MCP declare una, los installers la inyectan directo en el registro a nivel usuario (`~/.claude.json`, jamás commiteado) |
 | `START.md` | Bootstrap interactivo para agentes | Punto de entrada único: detecta el entorno, entrevista al usuario y enruta a la guía correcta (global, proyecto o ambos; owner o tercero; incluye Windows) |
 | `AGENT-INSTALL.md` | Guía en inglés para agentes | Restauración de MI máquina (sobreescribe `~/.claude/`) + verificación |
 | `AGENT-PROJECT-SETUP.md` | Guía en inglés para agentes | Configurar el proyecto de CUALQUIER persona usando este directorio, sin tocar su config global |
@@ -82,7 +82,7 @@ viven en las secciones "Paso a paso" enlazadas.
 |---|---|---|
 | `/setup-project [foco]` | Protocolo completo: descubre el stack real, audita config existente, propone y genera `AGENTS.md`+`CLAUDE.md`, `.claude/` (rules/skills/settings), README, plugins, puentes multi-agente (Codex/Gemini) y ofertas MCP — nada se escribe sin aprobar | Proyecto sin config de IA, config con drift (un comando documentado falla, una convención contradice el código), o re-auditoría tras cambios estructurales (`/setup-project audit`) |
 | `/refresh-knowledge [alcance]` | Re-verifica el conocimiento curado (recipes/references + claims de versión del propio repo) contra docs oficiales, actualiza, sube versiones (dual-bump), republica y reporta coste de tokens (`plugin details`) | ~1 vez al mes, o cuando `research` marque drift; alcance opcional: un plugin o skill concreto |
-| `/research <pregunta>` | Investiga la forma oficial ACTUAL de hacer algo (context7 → docs oficiales) aislado en el subagente `docs-researcher`; vuelve con versión + snippet + fuente | Cualquier duda de API/versión de terceros — también se dispara sola por la regla global "research proactively" |
+| `/research <pregunta>` | Investiga la forma oficial ACTUAL de hacer algo (docs oficiales en la web) aislado en el subagente `docs-researcher`; vuelve con versión + snippet + fuente | Cualquier duda de API/versión de terceros — también se dispara sola por la regla global "research proactively" |
 | `/azure-deploy` | Deploy de aplicaciones en contenedor a Azure Container Apps vía Azure CLI | Solo bajo orden explícita (side-effectful; nunca se auto-invoca) |
 
 **Skills globales automáticas** (cero costo hasta que el tema aparece; no requieren comando):
@@ -155,7 +155,7 @@ rollback y desinstalación documentados en `AGENT-INSTALL.md` → "Rollback & un
 curl -fsSL https://claude.ai/install.sh | bash   # 1. CLI nativo, auto-actualizable (≥ 2.1.187)
                                                  #    Windows PowerShell: irm https://claude.ai/install.ps1 | iex
 brew install jq        # 2. statusline — Windows: winget install jqlang.jq / Linux: apt install jq
-cp secrets.env.example secrets.env               # 3. rellena las keys reales
+cp secrets.env.example secrets.env               # 3. opcional — hoy no hay keys que rellenar
 bash install.sh                                  # 4. restaura todo (CLAUDE_LANGUAGE=<idioma> opcional;
                                                  #    respalda lo previo en ~/.claude/.backup-*)
                                                  #    Windows nativo: .\install.ps1
@@ -249,7 +249,7 @@ propio `~/.claude/CLAUDE.md`, nunca en los archivos compartidos del proyecto.
 Para "cómo abro un modal en Flutter", "cómo conecto la cámara", "cómo uso tal método":
 
 1. **Si hay receta curada** (skills `recipes` de los plugins móviles, `references/` de dominio): Claude la usa directo — librería recomendada + patrón mínimo + fuente oficial.
-2. **Si no hay receta o hay dudas de versión**: Claude dispara solo el skill `research` (regla global "research proactively"), que corre en el subagente `docs-researcher`: context7 → docs oficiales, SOLO la sección relevante, en inglés, y vuelve con versión + snippet + fuente. También puedes forzarlo: `/research how to persist auth session in expo router`.
+2. **Si no hay receta o hay dudas de versión**: Claude dispara solo el skill `research` (regla global "research proactively"), que corre en el subagente `docs-researcher`: localiza la página oficial y trae SOLO la sección relevante, en inglés, y vuelve con versión + snippet + fuente. También puedes forzarlo: `/research how to persist auth session in expo router`.
 3. **Nunca asume**: si tu pedido es ambiguo, pregunta antes de actuar (regla global).
 
 ## Editar y publicar un plugin
@@ -319,7 +319,7 @@ mantiene esta lista al día:
 
 - **Sandbox nativo de Bash** ([`/sandbox`](https://code.claude.com/docs/en/sandboxing)): aislamiento
   de archivos/red a nivel OS. Ya activo en `global/settings.json`: `sandbox.credentials` bloquea
-  `~/.ssh`/`~/.aws` y la key de context7 para subprocesos; `docker`/`gh`/`kubectl` van excluidos
+  `~/.ssh`/`~/.aws` para subprocesos; `docker`/`gh`/`kubectl` van excluidos
   (caen al flujo normal de permisos). macOS/Linux/WSL2; en Windows nativo no aplica (warning esperado).
 - **Auto mode** (ya en plan Pro): un clasificador reemplaza los prompts de permiso — lo seguro corre,
   lo destructivo se bloquea. Complementa (no reemplaza) la allowlist.
@@ -341,7 +341,7 @@ mantiene esta lista al día:
 ## Verificación rápida
 
 ```bash
-claude mcp list                      # context7 conectado
+claude mcp list                      # sin servers globales (mcp-servers.json hoy vacío)
 claude plugin marketplace list      # dev-plugins
 claude plugin list                   # 4 LSP enabled; 12 stack/dominio + expo disabled
 ```

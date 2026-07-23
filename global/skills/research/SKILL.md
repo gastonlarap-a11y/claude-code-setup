@@ -13,9 +13,8 @@ Rules: search **in English**, prefer the **latest stable** release and **officia
 
 ## Procedure
 1. **Scope the question** into one concrete query: library + version context + specific capability (e.g. "flutter showModalBottomSheet scroll control", "CameraX ImageCapture Compose").
-2. **context7 first**: `resolve-library-id` → `query-docs` scoped to the exact topic. This usually suffices.
-3. **Official docs fallback** (WebFetch/WebSearch) when context7 lacks coverage: the project's own docs, changelog, release notes, or repository. Ignore blogspam and outdated tutorials; check the doc's version selector matches the latest stable.
-4. **Version check**: confirm the current stable version (release page / registry) — never assume from memory.
+2. **Official docs** (WebSearch to locate, WebFetch for the exact section): the project's own docs, changelog, release notes, or repository. Ignore blogspam and outdated tutorials; check the doc's version selector matches the latest stable.
+3. **Version check**: confirm the current stable version (release page / registry) — never assume from memory.
 
 ## Report back (keep under ~400 words)
 - **Version**: current stable of the involved package(s).

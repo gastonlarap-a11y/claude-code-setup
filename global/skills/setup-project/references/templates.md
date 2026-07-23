@@ -375,9 +375,9 @@ approval_policy = "on-request"
 
 # Mirror the .mcp.json entries the project relies on (Codex does not read .mcp.json).
 # Rename the example table to the real server name.
-[mcp_servers.context7]
+[mcp_servers.example]
 command = "npx"
-args = ["-y", "@upstash/context7-mcp@latest"]
+args = ["-y", "<the-server-package>"]
 ```
 
 ### .codex/hooks.json — only when mirroring a Claude Code guarantee
