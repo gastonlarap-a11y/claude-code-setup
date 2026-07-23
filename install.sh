@@ -20,19 +20,19 @@ done
 # The manifest records exactly what the copy block ships; computed once, shared by the
 # dry-run preview and by the orphan pruning after the real copy.
 MANIFEST="$DEST/.install-manifest"
-new_manifest="$( (cd "$SRC/global" && find CLAUDE.md settings.json statusline.sh skills agents hooks rules -type f ! -name '.DS_Store') | LC_ALL=C sort )"
+new_manifest="$( (cd "$SRC/global" && find CLAUDE.md settings.json statusline.sh statusline.ps1 skills agents hooks rules -type f ! -name '.DS_Store') | LC_ALL=C sort )"
 
 echo "Restoring Claude Code config: $SRC -> $DEST"
 echo "  (owner-only: overwrites the global config; project setup lives in AGENT-PROJECT-SETUP.md)"
 
 if [ "$DRY_RUN" -eq 1 ]; then
   echo "DRY-RUN: nothing will be written."
-  for item in CLAUDE.md settings.json statusline.sh skills agents hooks rules; do
+  for item in CLAUDE.md settings.json statusline.sh statusline.ps1 skills agents hooks rules; do
     if [ -e "$DEST/$item" ]; then
       echo "  would back up: $item -> $DEST/.backup-<timestamp>/"
     fi
   done
-  echo "  would copy: global/{CLAUDE.md,settings.json,statusline.sh,skills,agents,hooks,rules} -> $DEST"
+  echo "  would copy: global/{CLAUDE.md,settings.json,statusline.sh,statusline.ps1,skills,agents,hooks,rules} -> $DEST"
   if [ -f "$MANIFEST" ]; then
     while IFS= read -r rel; do
       if [ -z "$rel" ]; then continue; fi
@@ -56,7 +56,7 @@ mkdir -p "$DEST"
 # --- Backup what this run will replace (last 3 backups kept) -------------------
 ts="$(date +%Y%m%d-%H%M%S)"
 BACKUP="$DEST/.backup-$ts"
-for item in CLAUDE.md settings.json statusline.sh skills agents hooks rules; do
+for item in CLAUDE.md settings.json statusline.sh statusline.ps1 skills agents hooks rules; do
   if [ -e "$DEST/$item" ]; then
     mkdir -p "$BACKUP"
     cp -R "$DEST/$item" "$BACKUP/$item"
@@ -75,6 +75,7 @@ cp -R "$SRC/global/agents" "$DEST/"
 cp -R "$SRC/global/hooks" "$DEST/"
 cp -R "$SRC/global/rules" "$DEST/"
 cp "$SRC/global/statusline.sh" "$DEST/statusline.sh"
+cp "$SRC/global/statusline.ps1" "$DEST/statusline.ps1"
 chmod +x "$DEST/hooks/"*.sh "$DEST/statusline.sh"
 find "$DEST/skills" "$DEST/agents" "$DEST/hooks" "$DEST/rules" -name ".DS_Store" -delete 2>/dev/null || true
 

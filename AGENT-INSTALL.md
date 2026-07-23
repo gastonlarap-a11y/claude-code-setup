@@ -22,9 +22,11 @@ this directory. Follow these steps in order. Do not skip verification.
 ### Windows
 Two routes (running Claude Code itself needs neither Git Bash nor WSL since 2.1.120):
 - **Native (recommended on company machines)**: run `.\install.ps1` from PowerShell —
-  same actions as `install.sh`, no bash needed. Note: the hooks and statusline are bash
-  scripts; without Git for Windows they stay inert (everything else works). Sandboxing
-  is not supported on native Windows — the startup warning is expected.
+  same actions as `install.sh`, no bash needed. Hooks and statusline have native
+  PowerShell ports: when bash is absent, the installer rewires the installed
+  `settings.json` to the `.ps1` variants automatically (with Git Bash present the bash
+  wiring is kept). Sandboxing is not supported on native Windows — the startup warning
+  is expected.
 - **Git Bash / WSL2**: install Git for Windows (`winget install --id Git.Git -e`) and run
   `bash install.sh` from Git Bash (WSL also works, but then `~/.claude` lives inside the
   distro, not in Windows). Git Bash paths: `C:\Users\<user>\...` is `/c/Users/<user>/...`;
@@ -50,8 +52,10 @@ This does, idempotently:
 1. Backs up the exact items it is about to replace into `~/.claude/.backup-<timestamp>/`
    (last 3 backups kept — see "Rollback & uninstall" below).
 2. Copies `global/CLAUDE.md`, `global/settings.json`, `global/skills/`, `global/agents/`,
-   `global/hooks/`, `global/rules/` and `global/statusline.sh` into `~/.claude/` and marks
-   scripts executable.
+   `global/hooks/`, `global/rules/`, `global/statusline.sh` and `global/statusline.ps1`
+   into `~/.claude/` and marks scripts executable. On Windows without bash, the
+   hook/statusline wiring in the installed `settings.json` is rewritten to the native
+   `.ps1` ports.
 3. Prunes orphans via `~/.claude/.install-manifest`: files shipped by a previous run but
    no longer in the repo are removed (manifest-listed paths only — user files survive).
 4. Applies `CLAUDE_LANGUAGE` (if set or persisted) to the copied `settings.json` and

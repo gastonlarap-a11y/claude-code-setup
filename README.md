@@ -15,15 +15,16 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 
 1. [Qué contiene](#qué-contiene)
 2. [Cómo funciona (el modelo de eficiencia)](#cómo-funciona)
-3. [Paso a paso: restaurar una máquina nueva](#restaurar-una-máquina-nueva)
-4. [Paso a paso: configurar un proyecto (nuevo o existente)](#configurar-un-proyecto-nuevo-o-existente)
-5. [Paso a paso: compartir este directorio con otra persona](#compartir-este-directorio-con-otra-persona)
-6. [Paso a paso: resolver "cómo hago X"](#resolver-cómo-hago-x)
-7. [Paso a paso: editar y publicar un plugin](#editar-y-publicar-un-plugin)
-8. [Paso a paso: mantener el conocimiento al día](#mantener-el-conocimiento-al-día)
-9. [Rendimiento: consejos oficiales](#rendimiento-consejos-oficiales)
-10. [Novedades Claude Code 2026](#novedades-claude-code-2026)
-11. [Verificación rápida](#verificación-rápida)
+3. [Comandos y skills disponibles](#comandos-y-skills-disponibles)
+4. [Paso a paso: restaurar una máquina nueva](#restaurar-una-máquina-nueva)
+5. [Paso a paso: configurar un proyecto (nuevo o existente)](#configurar-un-proyecto-nuevo-o-existente)
+6. [Paso a paso: compartir este directorio con otra persona](#compartir-este-directorio-con-otra-persona)
+7. [Paso a paso: resolver "cómo hago X"](#resolver-cómo-hago-x)
+8. [Paso a paso: editar y publicar un plugin](#editar-y-publicar-un-plugin)
+9. [Paso a paso: mantener el conocimiento al día](#mantener-el-conocimiento-al-día)
+10. [Rendimiento: consejos oficiales](#rendimiento-consejos-oficiales)
+11. [Novedades Claude Code 2026](#novedades-claude-code-2026)
+12. [Verificación rápida](#verificación-rápida)
 
 ## Qué contiene
 
@@ -32,8 +33,8 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `global/CLAUDE.md` | Instrucciones globales → `~/.claude/CLAUDE.md` | Reglas siempre activas: español/inglés, nunca asumir, investigar proactivamente, VCS por CLI (gh / az devops), autoría limpia |
 | `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH, `.git/` y lockfiles), hooks, statusline, env (modelo de subagentes: Sonnet), qué plugins están activos |
 | `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart/java: cargan SOLO al tocar archivos de ese lenguaje |
-| `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-git-push.sh` (bloquea push directo a main/master), `guard-git-add-all.sh` (bloquea staging masivo `-A`/`.`), `audit-config-change.sh` (auditoría de cambios de settings/skills → `~/.claude/config-audit.log`), `notify-os.sh` (notificaciones del SO, **opt-in** — snippet abajo) |
-| `global/statusline.sh` | Statusline → `~/.claude/statusline.sh` | Barra con % de contexto usado y % del límite 5h (necesita `jq`) |
+| `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-git-push.sh` (bloquea push directo a main/master), `guard-git-add-all.sh` (bloquea staging masivo `-A`/`.`), `audit-config-change.sh` (auditoría de cambios de settings/skills → `~/.claude/config-audit.log`), `notify-os.sh` (notificaciones del SO, **opt-in** — snippet abajo). Todos con puerto PowerShell nativo (`.ps1`) que `install.ps1` cablea cuando no hay bash |
+| `global/statusline.sh` / `.ps1` | Statusline → `~/.claude/` | Barra con % de contexto usado y % del límite 5h (la variante bash necesita `jq`; el puerto PowerShell no) |
 | `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) |
 | `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (sonnet): investiga docs en contexto aislado |
 | `global/mcp-servers.json` | Definición MCP | context7 (docs de librerías), key vía `secrets.env` |
@@ -70,6 +71,62 @@ skills de Flutter. Cada proyecto habilita lo suyo (siguiente sección).
 > además el modelo rápido usado en compactaciones. `scripts/check-subagent-model.sh` evita que
 > el frontmatter y el env var diverjan.
 
+## Comandos y skills disponibles
+
+Referencia completa de todo lo invocable que aporta este repo. Los pasos detallados
+viven en las secciones "Paso a paso" enlazadas.
+
+**Skills globales manuales** (se escriben en el prompt de Claude Code):
+
+| Comando | Qué hace | Cuándo usarlo |
+|---|---|---|
+| `/setup-project [foco]` | Protocolo completo: descubre el stack real, audita config existente, propone y genera `AGENTS.md`+`CLAUDE.md`, `.claude/` (rules/skills/settings), README, plugins, puentes multi-agente (Codex/Gemini) y ofertas MCP — nada se escribe sin aprobar | Proyecto sin config de IA, config con drift (un comando documentado falla, una convención contradice el código), o re-auditoría tras cambios estructurales (`/setup-project audit`) |
+| `/refresh-knowledge [alcance]` | Re-verifica el conocimiento curado (recipes/references + claims de versión del propio repo) contra docs oficiales, actualiza, sube versiones (dual-bump), republica y reporta coste de tokens (`plugin details`) | ~1 vez al mes, o cuando `research` marque drift; alcance opcional: un plugin o skill concreto |
+| `/research <pregunta>` | Investiga la forma oficial ACTUAL de hacer algo (context7 → docs oficiales) aislado en el subagente `docs-researcher`; vuelve con versión + snippet + fuente | Cualquier duda de API/versión de terceros — también se dispara sola por la regla global "research proactively" |
+| `/azure-deploy` | Deploy de aplicaciones en contenedor a Azure Container Apps vía Azure CLI | Solo bajo orden explícita (side-effectful; nunca se auto-invoca) |
+
+**Skills globales automáticas** (cero costo hasta que el tema aparece; no requieren comando):
+
+| Skill | Se activa cuando |
+|---|---|
+| `architecture` | eliges estructura o patrones, arrancas/reestructuras un proyecto (su catálogo de principios lo usa `setup-project`) |
+| `ci-cd` | creas o modificas workflows de GitHub Actions, pipelines o deploys |
+| `databases` | diseñas esquemas, escribes migraciones o eliges datastore |
+| `docker-kubernetes` | escribes o revisas Dockerfiles, compose o manifests de K8s |
+| `research` | aparece superficie de terceros no cubierta por un skill ya cargado |
+
+**Skills de plugins** (requieren el plugin habilitado en el proyecto — ver mapeo más abajo):
+`/nestjs:new-module` es el único manual (scaffolding de módulo NestJS). El resto de los
+12 plugins son skills automáticas por tema: `architecture`/`testing`/`tooling` del stack
+activo, `recipes` en los móviles, `auth`/`design`/`webhooks` (api-design), `patterns`
+(realtime/background-jobs), `ux`.
+
+**Installers** (solo máquinas del owner — [paso a paso](#restaurar-una-máquina-nueva)):
+
+| Comando | Qué hace | Cuándo |
+|---|---|---|
+| `bash install.sh` / `.\install.ps1` | Restaura `~/.claude/` completo: backup previo (últimos 3), copia, poda huérfanos por manifest, MCP data-driven con secretos, marketplace y plugins; idempotente | Máquina nueva o para propagar cambios de `global/` |
+| `--dry-run` / `-DryRun` | Preview de backup/copias/podas/idioma sin escribir nada | Antes de restaurar sobre una config existente |
+| `CLAUDE_LANGUAGE=<idioma>` | Fija el idioma de respuesta en la copia instalada y lo persiste por máquina | Primera instalación cuando no se quiere español |
+
+**Scripts de validación** (`scripts/` — CI los corre en cada push; útiles a mano antes de commitear):
+
+| Script | Valida |
+|---|---|
+| `check-versions.sh` | dual-bump: paridad marketplace ↔ `plugin.json` ↔ `plugins.txt` ↔ `enabledPlugins` |
+| `check-plugin-version-bump.sh` | en ramas: plugin tocado sin subir su versión → falla nombrándolo |
+| `check-language-anchors.sh` | las anclas de idioma que reescriben los installers siguen en las fuentes |
+| `check-subagent-model.sh` | frontmatter de `global/agents/` vs `CLAUDE_CODE_SUBAGENT_MODEL` |
+| `check-templates.sh` | los esqueletos JSON/TOML de `setup-project` siguen siendo config válida |
+| `installer-smoke.sh` / `.ps1` | ejecución real de los installers: instalación fresca, idioma, poda, dry-run, ruta de fallo (y wiring `.ps1` en Windows) |
+
+**Flujo de plugins** (resumen — [paso a paso](#editar-y-publicar-un-plugin)):
+`claude plugin init <name>` (esqueleto) · `claude --plugin-dir ./plugins/<name>` (prueba
+en caliente) + `/reload-skills` (iterar sin reiniciar) · `claude plugin validate
+./plugins/<name> --strict` · `claude plugin marketplace update dev-plugins` ·
+`claude plugin update <name>@dev-plugins` · `claude plugin details <name>` (coste de
+tokens por componente).
+
 ## Restaurar una máquina nueva
 
 **Opción A — con un agente de IA (recomendada), sirve para CUALQUIER máquina o persona:**
@@ -88,8 +145,9 @@ rollback y desinstalación documentados en `AGENT-INSTALL.md` → "Rollback & un
 
 > **Windows**: ejecutar Claude Code ya NO requiere Git Bash (desde 2.1.120 usa PowerShell
 > como shell tool si bash no está). Para restaurar la config tienes dos rutas: `install.ps1`
-> nativo desde PowerShell, o `install.sh` desde Git Bash/WSL2. Nota: los hooks y la
-> statusline son bash — sin Git for Windows quedan inertes (todo lo demás funciona).
+> nativo desde PowerShell, o `install.sh` desde Git Bash/WSL2. Los hooks y la statusline
+> tienen puertos PowerShell nativos: sin Git for Windows, `install.ps1` cablea
+> automáticamente las variantes `.ps1` — todo funciona igual.
 
 **Opción B — manual:**
 
