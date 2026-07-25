@@ -80,7 +80,7 @@
     ]
   },
   "model": "fable",
-  "fallbackModel": ["claude-opus-4-8", "claude-sonnet-5"],
+  "fallbackModel": ["claude-opus-5", "claude-sonnet-5"],
   "language": "spanish",
   "env": {
     "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
@@ -96,9 +96,22 @@
       "files": [
         { "path": "~/.ssh", "mode": "deny" },
         { "path": "~/.aws", "mode": "deny" }
-      ],
-      "envVars": [
-        { "name": "CONTEXT7_API_KEY", "mode": "deny" }
+      ]
+    },
+    "network": {
+      "strictAllowlist": true,
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "proxy.golang.org",
+        "sum.golang.org",
+        "pub.dev",
+        "storage.googleapis.com",
+        "repo.maven.apache.org",
+        "dl.google.com",
+        "api.nuget.org",
+        "github.com",
+        "*.github.com",
+        "*.githubusercontent.com"
       ]
     },
     "excludedCommands": ["docker *", "gh *", "kubectl *"]

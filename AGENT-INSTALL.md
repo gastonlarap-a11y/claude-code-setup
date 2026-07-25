@@ -4,18 +4,20 @@ You are restoring the owner's Claude Code global configuration on a fresh machin
 this directory. Follow these steps in order. Do not skip verification.
 
 ## 1. Preconditions
-- Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.187** (tested with 2.1.201)
-  (2.1.154 honors `defaultEnabled: false`; 2.1.187 adds `sandbox.credentials`, which
-  `global/settings.json` uses). If missing, install it with the native installer
+- Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.219** (tested with 2.1.219)
+  (2.1.154 honors `defaultEnabled: false`; 2.1.187 adds `sandbox.credentials` and 2.1.219
+  adds `sandbox.network.strictAllowlist`, both used by `global/settings.json` — older CLIs
+  ignore the newer keys and fall back to permission prompts). If missing, install it with the native installer
   (`curl -fsSL https://claude.ai/install.sh | bash`; Windows PowerShell:
   `irm https://claude.ai/install.ps1 | iex`) and ask the user to log in (`claude` → follow auth).
 - Confirm `jq` is installed — the statusline degrades without it. Install: `brew install jq`
   (macOS) / `winget install --id jqlang.jq -e` (Windows) / `sudo apt install jq` (Linux).
 - Confirm some Python is available (`python3`, `python` or `py` — any ≥3.8): `install.sh`
   and the hooks use it as the JSON fallback when `jq` is missing.
-- Confirm `secrets.env` exists here. If not: read `secrets.env.example`, interview the
+- `secrets.env` is OPTIONAL today (`global/mcp-servers.json` ships no keyed servers).
+  Only when a future server declares env keys: read `secrets.env.example`, interview the
   user one variable at a time (what it is for, expected format), then write `secrets.env`
-  yourself with the answers before continuing. Never echo the values back or commit them.
+  yourself with the answers. Never echo the values back or commit them.
 - Dart SDK ≥ 3.9 is only needed inside Flutter projects (for the bundled Dart MCP/LSP);
   do not install it globally as part of this restore.
 
@@ -60,12 +62,12 @@ This does, idempotently:
    no longer in the repo are removed (manifest-listed paths only — user files survive).
 4. Applies `CLAUDE_LANGUAGE` (if set or persisted) to the copied `settings.json` and
    `CLAUDE.md` — see "Response language" above.
-5. Sources `secrets.env` and resolves, data-driven, every env var declared by the servers
-   in `global/mcp-servers.json` (today: `CONTEXT7_API_KEY` for `context7`) directly into
-   their user-scope MCP registrations (`~/.claude.json` — machine-local, never committed).
-   Missing keys just drop: the server registers keyless (context7: lower rate limits) and
-   `/doctor` stays clean. Adding a keyed server = one JSON entry + one `secrets.env` line,
-   zero installer changes.
+5. Sources `secrets.env` (if present) and resolves, data-driven, every env var declared
+   by the servers in `global/mcp-servers.json` (currently empty — no servers, no keys)
+   directly into their user-scope MCP registrations (`~/.claude.json` — machine-local,
+   never committed). Missing keys just drop: the server registers keyless and `/doctor`
+   stays clean. Adding a keyed server = one JSON entry + one `secrets.env` line, zero
+   installer changes.
    Note: a user-level `settings.local.json` env block is NOT read by Claude Code — the
    `${VAR}` placeholders in MCP configs expand from the process environment only.
 6. (Re-)registers each server (`claude mcp remove` + `add-json`), so key/config updates
@@ -80,7 +82,8 @@ This does, idempotently:
 If `install.sh` fails at any step, perform that step manually (the script is short — read it).
 
 ## 3. Verify
-- `claude mcp list` shows `context7` connected.
+- `claude mcp list` shows exactly the servers declared in `global/mcp-servers.json`
+  (none today — an empty list is the expected result).
 - `claude plugin marketplace list` shows `dev-plugins`.
 - `claude plugin list` shows the 4 LSP plugins **enabled**, and `expo` + the 12 personal
   plugins (`nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`,

@@ -1,0 +1,6 @@
+# Project-scope Codex CLI defaults — loads only after `codex trust`.
+# Codex reads AGENTS.md natively and project skills from .agents/skills/ (symlink to
+# .claude/skills/, which stays canonical). Keep global-only keys (model, profiles,
+# notify, model_providers) out of this file.
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"

@@ -49,8 +49,8 @@ Hard rules:
   (settings, rules, skills, hooks, agents, commands), `AGENTS.md` (+ nested ones and
   `AGENTS.override.md`), `.agents/skills/`, `GEMINI.md`, `.gemini/` (settings, commands,
   skills), `.codex/` (config.toml, hooks.json, agents, skills), `.cursorrules`,
-  `.cursor/rules/`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`,
-  `.mcp.json`, nested `CLAUDE.md` files in subdirectories.
+  `.cursor/rules/`, `.windsurfrules`, `.windsurf/rules/`, `.clinerules`, `.devin/rules/`,
+  `.github/copilot-instructions.md`, `.mcp.json`, nested `CLAUDE.md` files in subdirectories.
 - **Ecosystem**: `claude plugin marketplace list` (is `dev-plugins` or another relevant
   marketplace registered?), `claude plugin list`, `claude mcp list`.
 - **Docs**: README/ARCHITECTURE/CONTRIBUTING — read them; config points to them, never
@@ -90,7 +90,9 @@ keep / tighten / move / add / retire — retire is always shown to the user, nev
   repeated across files; no contradictions (Claude resolves them arbitrarily — fix them).
 - **Other-tool configs**: `AGENTS.md` present → root CLAUDE.md becomes `@AGENTS.md` import
   plus Claude-specific deltas below it (one shared source for all agents). `.cursorrules`
-  & co. → merge their still-true content into the shared files; leave the originals alone.
+  & co. → merge their still-true content into the shared files; leave the originals alone
+  (`/init` with `CLAUDE_CODE_NEW_INIT=1` also reads AGENTS.md/Windsurf/Cline/Devin rules
+  natively — this protocol supersedes it, but mention it for quick bootstraps).
   `GEMINI.md` present → same merge into the shared file, and offer the
   `.gemini/settings.json` bridge (templates § Other-agent bridges) so Gemini reads it.
 - **Coverage gaps**: missing test/lint/build commands, no architecture map, routine commands

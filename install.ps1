@@ -199,8 +199,7 @@ if (Test-Path $SecretsFile) {
         }
     }
 } else {
-    Write-Warning ('secrets.env not found - context7 will be registered keyless (lower rate limits). ' +
-        'Copy secrets.env.example to secrets.env and re-run to add the key.')
+    Write-Host '  NOTE: secrets.env not found - keyed MCP servers (if any in global/mcp-servers.json) register keyless.'
 }
 
 # --- MCP servers (user scope) + marketplace + plugins ------------------------

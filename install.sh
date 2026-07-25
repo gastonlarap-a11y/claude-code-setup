@@ -163,8 +163,7 @@ if [ -f "$SRC/secrets.env" ]; then
   source "$SRC/secrets.env"
   set +a
 else
-  echo "  WARNING: secrets.env not found — context7 will be registered keyless (lower rate limits)."
-  echo "           Copy secrets.env.example to secrets.env and re-run to add the key."
+  echo "  NOTE: secrets.env not found — keyed MCP servers (if any in global/mcp-servers.json) register keyless."
 fi
 
 # --- MCP servers (user scope) + plugins --------------------------------------
