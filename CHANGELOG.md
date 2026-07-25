@@ -9,6 +9,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-24
+
 ### Added
 - Strict network allowlist for sandboxed commands (`sandbox.network.strictAllowlist`,
   CLI ≥ 2.1.219): egress limited to package registries (npm, Go proxy, pub.dev, Maven,
