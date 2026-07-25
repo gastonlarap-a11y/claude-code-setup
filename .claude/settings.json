@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash scripts/check-versions.sh)",
+      "Bash(bash scripts/check-plugin-version-bump.sh:*)",
+      "Bash(bash scripts/check-language-anchors.sh)",
+      "Bash(bash scripts/check-subagent-model.sh)",
+      "Bash(bash scripts/check-templates.sh)",
+      "Bash(shellcheck:*)",
+      "Bash(jq empty:*)",
+      "Bash(claude plugin validate:*)",
+      "Bash(claude plugin list:*)",
+      "Bash(claude plugin marketplace list:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ],
+    "deny": [
+      "Read(secrets.env)",
+      "Read(secrets*.env)",
+      "Read(**/.env)",
+      "Read(**/.env.*)"
+    ]
+  }
+}
