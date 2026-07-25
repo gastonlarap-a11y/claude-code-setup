@@ -328,8 +328,9 @@ trivially installable → skip, with a one-line reason in the proposal.
 
 ## Other-agent bridges (opt-in only)
 
-Generated only when the step-3 batched question confirms the team uses that agent —
-never by default. Harness-dependent details (paths, enums, event names) are verified via
+Generated only for the agents the user selected in the step-3 batched question (asked
+on every run; repo signs only pre-fill the suggested answer) — never by default.
+Harness-dependent details (paths, enums, event names) are verified via
 the `research` skill before writing: Codex ships near-daily and Gemini's successor
 (Antigravity CLI) may move things.
 

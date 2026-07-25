@@ -253,12 +253,13 @@ new-project interview already settled:
   templates.md — e.g. typescript-lsp needs tsserver, absent under tsgo).
 - Deploy procedure in the roadmap but not built yet → create the deploy skill now marked
   "pending validation", or defer until it exists.
-- Signs the team also uses other agent CLIs (`.codex/`, `.gemini/`, `GEMINI.md`,
-  `.agents/`, or the user says so) → offer the other-agent bridges
-  (templates § Other-agent bridges): `.agents/skills` symlink, `.gemini/settings.json`
-  context bridge, `.codex/config.toml` (+ `.codex/hooks.json` only when mirroring a
-  guarantee generated for Claude Code in this same session). Opt-in, asked once, never
-  generated silently.
+- ALWAYS ask: which other agent CLIs does the team use for this project — Codex CLI,
+  Gemini CLI, or none? Signs in the repo (`.codex/`, `.gemini/`, `GEMINI.md`,
+  `.agents/`) only pre-fill the suggested answer. Per selection, generate the bridges
+  from templates § Other-agent bridges: Codex → `.agents/skills` symlink +
+  `.codex/config.toml` (+ `.codex/hooks.json` only when mirroring a guarantee generated
+  for Claude Code in this same session); Gemini → `.gemini/settings.json` (+ the shared
+  `.agents/skills` symlink). Never generate without the explicit choice.
 - GitHub remote and no `github` MCP server registered → offer the official GitHub MCP
   (tool search defers schemas, so its idle context cost is near zero).
 - Browser-testable UI (Next.js / React Native / Flutter web) →

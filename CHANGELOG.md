@@ -35,6 +35,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
 - `LICENSE` (MIT) and this `CHANGELOG.md`.
 
 ### Changed
+- `setup-project` now ALWAYS asks which agent CLIs to configure (Codex CLI / Gemini CLI /
+  none) in the batched questions — repo signs only pre-fill the suggested answer; bridges
+  still require the explicit per-agent choice.
 - Repo root instructions split for dogfooding: canonical `AGENTS.md` + thin `CLAUDE.md`
   (`@AGENTS.md` import + Claude-specific delta).
 - Installers: MCP secret injection is now data-driven from `global/mcp-servers.json` —
