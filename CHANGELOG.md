@@ -10,6 +10,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
 ## [Unreleased]
 
 ### Added
+- Strict network allowlist for sandboxed commands (`sandbox.network.strictAllowlist`,
+  CLI ≥ 2.1.219): egress limited to package registries (npm, Go proxy, pub.dev, Maven,
+  NuGet) and GitHub; older CLIs ignore the key and fall back to permission prompts.
+  Version floor in `START.md`/`AGENT-INSTALL.md` raised accordingly.
+- `setup-project` discovery now also covers `.windsurf/rules/` and `.devin/rules/`, and
+  notes `/init` + `CLAUDE_CODE_NEW_INIT=1` as the quick-bootstrap alternative it supersedes.
+- `new-plugin` skill documents the marketplace `renames` map (safe plugin rename/retire,
+  CLI ≥ 2.1.193).
+- Own-repo agent config via `/setup-project` (dogfood): tracked `.claude/settings.json`
+  (routine-command allows, secrets read-deny), `verify` and `new-plugin` project skills,
+  engineering-standards block in `AGENTS.md`, config-maintenance block in `CLAUDE.md`,
+  other-agent bridges (`.agents/skills`, `.gemini/settings.json`, `.codex/config.toml`)
+  and local-config entries in `.gitignore`.
 - Multi-agent bridges in `setup-project` (opt-in via batched question): shared
   `.agents/skills` symlink, `.gemini/settings.json` context bridge, project-scope
   `.codex/config.toml` / `.codex/hooks.json` skeletons (templates § Other-agent bridges),
@@ -41,6 +54,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
   MCP+secrets installer mechanism stays, empty, for future servers.
 
 ### Changed
+- `fallbackModel` updated to `["claude-opus-5", "claude-sonnet-5"]` (Opus 5 is the Claude
+  Code default since 2.1.219; `claude-opus-4-8` remains the Bedrock/Vertex lineage).
+- Docs: README documents the primary model (`fable`) and the Claude 5 lineup, and the
+  `global/rules/` row now lists `csharp`; `AGENTS.md` secrets note records that
+  `${user_config.*}` is rejected in shell-form hooks (use exec form +
+  `CLAUDE_PLUGIN_OPTION_<KEY>`, 2.1.207 security fix).
 - `setup-project` now ALWAYS asks which agent CLIs to configure (Codex CLI / Gemini CLI /
   none) in the batched questions — repo signs only pre-fill the suggested answer; bridges
   still require the explicit per-agent choice.

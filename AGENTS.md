@@ -31,6 +31,20 @@ generated `AGENTS.md` directly, Gemini CLI via a one-line bridge). Agent entry p
 - Secrets: `secrets.env` only feeds the installer's user-scope MCP registrations
   (`global/mcp-servers.json`, data-driven). A future plugin-scoped secret uses
   `userConfig` with `sensitive: true` in its `plugin.json` (stored in the OS keychain,
-  prompted at enable time) — never a new bespoke installer path.
+  prompted at enable time) — never a new bespoke installer path. Hooks consume it via
+  exec form + the `CLAUDE_PLUGIN_OPTION_<KEY>` env var; `${user_config.*}` is rejected
+  in shell-form hook commands (2.1.207 security fix).
 - Repo-level changes (installers, `global/`, CI, protocols) get a `CHANGELOG.md` entry
   under `[Unreleased]`; per-plugin changes rely on the dual-bump rule instead.
+
+## Engineering standards
+
+- Before declaring work done, run the CI checks locally and report real results — the
+  `verify` skill runs the full `validate.yml` mirror (check scripts, shellcheck, plugin
+  schema validation).
+- Error contract: hooks and statusline scripts are fail-open (degrade silently, never
+  break a session); installers and CI scripts fail loud. Keep new scripts on the right side.
+- No speculative abstractions: a new installer path, script or config knob needs a problem
+  this repo already has — say which and why.
+- Ambiguous request → ask targeted questions first; a better route exists → say why and
+  let the requester choose before proceeding.

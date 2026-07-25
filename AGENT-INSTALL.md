@@ -4,9 +4,10 @@ You are restoring the owner's Claude Code global configuration on a fresh machin
 this directory. Follow these steps in order. Do not skip verification.
 
 ## 1. Preconditions
-- Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.187** (tested with 2.1.201)
-  (2.1.154 honors `defaultEnabled: false`; 2.1.187 adds `sandbox.credentials`, which
-  `global/settings.json` uses). If missing, install it with the native installer
+- Confirm the `claude` CLI is installed (`claude --version`) and is **≥ 2.1.219** (tested with 2.1.219)
+  (2.1.154 honors `defaultEnabled: false`; 2.1.187 adds `sandbox.credentials` and 2.1.219
+  adds `sandbox.network.strictAllowlist`, both used by `global/settings.json` — older CLIs
+  ignore the newer keys and fall back to permission prompts). If missing, install it with the native installer
   (`curl -fsSL https://claude.ai/install.sh | bash`; Windows PowerShell:
   `irm https://claude.ai/install.ps1 | iex`) and ask the user to log in (`claude` → follow auth).
 - Confirm `jq` is installed — the statusline degrades without it. Install: `brew install jq`

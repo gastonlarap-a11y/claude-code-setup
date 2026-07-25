@@ -31,8 +31,8 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | Ruta | Qué es | Para qué me sirve |
 |---|---|---|
 | `global/CLAUDE.md` | Instrucciones globales → `~/.claude/CLAUDE.md` | Reglas siempre activas: español/inglés, nunca asumir, investigar proactivamente, VCS por CLI (gh / az devops), autoría limpia |
-| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH, `.git/` y lockfiles), hooks, statusline, env (modelo de subagentes: Sonnet), qué plugins están activos |
-| `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart/java: cargan SOLO al tocar archivos de ese lenguaje |
+| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS + allowlist de red estricta), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH, `.git/` y lockfiles), hooks, statusline, env (modelo de subagentes: Sonnet), qué plugins están activos |
+| `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart/java/csharp: cargan SOLO al tocar archivos de ese lenguaje |
 | `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-git-push.sh` (bloquea push directo a main/master), `guard-git-add-all.sh` (bloquea staging masivo `-A`/`.`), `audit-config-change.sh` (auditoría de cambios de settings/skills → `~/.claude/config-audit.log`), `notify-os.sh` (notificaciones del SO, **opt-in** — snippet abajo). Todos con puerto PowerShell nativo (`.ps1`) que `install.ps1` cablea cuando no hay bash |
 | `global/statusline.sh` / `.ps1` | Statusline → `~/.claude/` | Barra con % de contexto usado y % del límite 5h (la variante bash necesita `jq`; el puerto PowerShell no) |
 | `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) |
@@ -244,6 +244,14 @@ config personal (idioma, autoría, statusline). `AGENT-PROJECT-SETUP.md` lo advi
 agentes no deben sugerirlo a terceros. Las preferencias personales de cada quien van en su
 propio `~/.claude/CLAUDE.md`, nunca en los archivos compartidos del proyecto.
 
+### Editar este repo con otros agentes (Codex / Gemini CLI)
+
+El repo trae sus propios bridges: Codex lee `AGENTS.md` nativo (+ `.codex/config.toml`
+al hacer `codex trust`), Gemini lo lee vía `.gemini/settings.json`, y ambos toman las
+skills del symlink `.agents/skills → .claude/skills`. En Windows los symlinks de git
+requieren Developer Mode (o admin); si el checkout lo dejó como archivo de texto,
+recrearlo: `cmd /c mklink /D .agents\skills ..\.claude\skills` desde la raíz del repo.
+
 ## Resolver "cómo hago X"
 
 Para "cómo abro un modal en Flutter", "cómo conecto la cámara", "cómo uso tal método":
@@ -319,16 +327,22 @@ mantiene esta lista al día:
 
 - **Sandbox nativo de Bash** ([`/sandbox`](https://code.claude.com/docs/en/sandboxing)): aislamiento
   de archivos/red a nivel OS. Ya activo en `global/settings.json`: `sandbox.credentials` bloquea
-  `~/.ssh`/`~/.aws` para subprocesos; `docker`/`gh`/`kubectl` van excluidos
-  (caen al flujo normal de permisos). macOS/Linux/WSL2; en Windows nativo no aplica (warning esperado).
+  `~/.ssh`/`~/.aws` para subprocesos; `sandbox.network` con `strictAllowlist` (≥ 2.1.219) deniega
+  en silencio el egress a hosts fuera de la allowlist (registries npm/Go/pub.dev/Maven/NuGet +
+  GitHub) — en CLIs anteriores degrada a prompts; `docker`/`gh`/`kubectl` van excluidos
+  (caen al flujo normal de permisos, no al proxy de red). macOS/Linux/WSL2; en Windows nativo
+  no aplica (warning esperado).
 - **Auto mode** (ya en plan Pro): un clasificador reemplaza los prompts de permiso — lo seguro corre,
   lo destructivo se bloquea. Complementa (no reemplaza) la allowlist.
 - **`/code-review`**: bugs de corrección a nivel de esfuerzo elegido; `--fix` aplica, `--comment`
   comenta el PR, `ultra` = revisión multi-agente en la nube.
 - **Observabilidad**: `/usage` (consumo por skill/subagente/plugin/MCP), `/doctor` (diagnóstico de
   config), `/cd` (cambiar de directorio sin perder caché), `--safe-mode` (arrancar sin customizaciones).
-- **Modelos**: Sonnet 5 (contexto 1M), Opus 4.8 (effort high por defecto, `/effort xhigh`, fast mode
-  2x costo / 2.5x velocidad). `fallbackModel` (hasta 3 en cadena) ya configurado aquí.
+- **Modelos**: familia Claude 5 — Fable 5 (alias `fable`, tier Mythos, el modelo primario en
+  `global/settings.json`), Opus 5 (`claude-opus-5`, default de Claude Code desde 2.1.219;
+  `claude-opus-4-8` queda como linaje Bedrock/Vertex) y Sonnet 5 (contexto 1M). `/effort xhigh`,
+  fast mode 2x costo / 2.5x velocidad. `fallbackModel` (hasta 3 en cadena) ya configurado aquí:
+  `claude-opus-5` → `claude-sonnet-5`.
 - **Skills/plugins**: `/reload-skills` sin reiniciar; skills de proyecto en `.claude/skills/` cargan
   sin marketplace (≥ 2.1.157); `claude plugin init` para scaffolding; `disallowed-tools` en frontmatter.
 - **MCP tool search**: los esquemas de herramientas MCP se difieren por defecto (cargan solo los

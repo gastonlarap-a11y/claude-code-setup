@@ -11,7 +11,7 @@ Gather silently:
 
 - **OS and shell**: platform, and on Windows whether you are in Git Bash, WSL, or
   PowerShell/CMD (`echo $SHELL` / `$PSVersionTable` behavior tells you).
-- **Claude CLI**: `claude --version` (needs ≥ 2.1.187; install with the native installer:
+- **Claude CLI**: `claude --version` (needs ≥ 2.1.219; install with the native installer:
   `curl -fsSL https://claude.ai/install.sh | bash` on macOS/Linux/WSL,
   `irm https://claude.ai/install.ps1 | iex` on Windows PowerShell).
 - **Existing global config**: if `~/.claude/` exists, inventory it read-only — which of
