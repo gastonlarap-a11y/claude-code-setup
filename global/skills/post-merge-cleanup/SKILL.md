@@ -21,10 +21,17 @@ stops the cleanup: report what you found and leave the branch alone.
 
 ## 2. Clean up
 
+One chain, `&&` throughout — never split the delete onto its own line:
+
 ```bash
-git checkout main && git pull && git fetch --prune
-git branch -D <branch>          # safe only because step 1 verified the merge
+git checkout main && git pull && git fetch --prune && git branch -D <branch>
 ```
+
+Two conditions make the delete safe, and **both** are load-bearing: step 1 proved the merge
+exists on the remote, and a successful `pull` proves this clone actually has it. Drop the
+chaining and a failed `pull` — no network, a conflict, a wrong remote — still lets
+`git branch -D` run, leaving the commits only on the server. Recoverable from the reflog, but
+only if you notice.
 
 ## 3. Start the next work from a fresh branch
 

@@ -23,6 +23,7 @@ function Deny {
 
 # Analyze the segment after the last `git push` up to any command separator.
 $segment = $cmd.Substring($cmd.LastIndexOf('git push') + 'git push'.Length)
+$segment = ($segment -split "`r?`n")[0]      # stop at the end of this line first
 $segment = ($segment -split '[;&|]')[0]
 
 # Tokens that are not flags: first is the remote, the rest are refspecs.

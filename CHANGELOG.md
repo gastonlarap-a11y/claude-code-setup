@@ -37,6 +37,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
 - `github-new-repo` skill, rescued from `~/.claude/skills/` where it lived unversioned.
 
 ### Fixed
+- `guard-git-push` and `guard-git-add-all` (`.sh` + `.ps1`) read past the end of the command
+  line they were analysing. `sed 's/[;&|].*$//'` cuts per line, so in a multi-line command the
+  segment bled into the following lines — `git push -u origin feat/x` followed by
+  `gh pr create --base main` on the next line parsed `main` as a refspec and denied a perfectly
+  legal push. Both now stop at the end of the line first. Verified with 8 cases: explicit
+  pushes to main/master and bulk staging still denied, feature-branch pushes and multi-line
+  commands allowed.
+- `post-merge-cleanup` split `git branch -D` onto its own line, so a failed `git pull` — no
+  network, a conflict, a wrong remote — still deleted the local branch and left the commits
+  only on the remote. It happened in practice. The whole cleanup is now one `&&` chain, and the
+  skill states that a successful `pull` is the second load-bearing condition alongside the
+  merge verification, not a formality.
 - Gemini CLI retired on 2026-06-18; its successor Antigravity CLI reads `AGENTS.md` natively and
   uses `.agents/skills/`. `setup-project` no longer offers or generates the `.gemini/settings.json`
   bridge (a legacy `GEMINI.md`/`.gemini/` found in a repo is still merged and left alone), and the

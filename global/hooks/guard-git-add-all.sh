@@ -25,7 +25,9 @@ deny() {
 
 # Analyze the segment after the last `git add` up to any command separator.
 segment="${cmd##*git add}"
-segment="$(printf '%s' "$segment" | sed 's/[;&|].*$//')"
+# head -n1 first: sed cuts per line, so a multi-line command would otherwise bleed into
+# the next line and read its tokens as arguments to this `git add`.
+segment="$(printf '%s' "$segment" | head -n1 | sed 's/[;&|].*$//')"
 set -f  # no globbing while tokenizing: the command may contain * or ?
 
 for tok in $segment; do
