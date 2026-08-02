@@ -32,7 +32,10 @@ fi
 [ "$active" != "true" ] || { echo '{}'; exit 0; }
 
 dir="${CLAUDE_PROJECT_DIR:-$cwd}"
-[ -n "$dir" ] && [ -d "$dir" ] || { echo '{}'; exit 0; }
+if [ -z "$dir" ] || [ ! -d "$dir" ]; then
+  echo '{}'
+  exit 0
+fi
 cd "$dir" 2>/dev/null || { echo '{}'; exit 0; }
 
 for cmd in "$@"; do
