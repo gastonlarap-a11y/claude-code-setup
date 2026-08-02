@@ -37,6 +37,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
 - `github-new-repo` skill, rescued from `~/.claude/skills/` where it lived unversioned.
 
 ### Fixed
+- `post-merge-cleanup` split `git branch -D` onto its own line, so a failed `git pull` — no
+  network, a conflict, a wrong remote — still deleted the local branch and left the commits
+  only on the remote. It happened in practice. The whole cleanup is now one `&&` chain, and the
+  skill states that a successful `pull` is the second load-bearing condition alongside the
+  merge verification, not a formality.
 - Gemini CLI retired on 2026-06-18; its successor Antigravity CLI reads `AGENTS.md` natively and
   uses `.agents/skills/`. `setup-project` no longer offers or generates the `.gemini/settings.json`
   bridge (a legacy `GEMINI.md`/`.gemini/` found in a repo is still merged and left alone), and the
