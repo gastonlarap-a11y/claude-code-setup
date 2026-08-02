@@ -254,6 +254,10 @@ new-project interview already settled:
 - Deployment target not detectable → README `Deployment` section.
 - Formatter configured (Biome, Prettier, gofmt, ktlint, …) → ALWAYS offer the PostToolUse
   format hook (templates.md skeleton), noting its cost: one process spawn per edit.
+- A typecheck or lint command that runs in seconds and passes TODAY → ALWAYS offer the
+  end-of-turn gate (templates § End-of-turn gate). It is the only sensor that checks the work
+  instead of the config; without it, "verify before declaring done" rests on the model
+  remembering. Never wire it onto a check that is currently failing.
 - Official code-intelligence (LSP) plugin exists for the language → offer it AFTER checking
   the toolchain supports it (required binary present or installable; compatibility notes in
   templates.md — e.g. typescript-lsp needs tsserver, absent under tsgo).

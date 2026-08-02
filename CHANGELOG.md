@@ -10,6 +10,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
 ## [Unreleased]
 
 ### Added
+- `verify-turn` hook (`Stop`; `.sh` + `.ps1`): the end-of-turn quality gate. Every other guard
+  here checks the config or the command — this one checks the **work**. It runs the project's
+  own cheap checks as the turn closes and refuses to let it end if one fails, handing the
+  failure back while the context is still alive. Until now "run lint/typecheck before declaring
+  work done" was prose in `global/CLAUDE.md`: a guide the model had to remember, where a
+  deterministic sensor belonged. Generic by design — each repo declares its own verified
+  commands in `.claude/settings.json`. Handles the three known traps: `stop_hook_active` so a
+  failure cannot loop, JSON `decision: block` (exit 1 is silently ignored by the harness), and a
+  bounded `timeout`. Fail-open like the rest.
+- `setup-project` now offers the gate for every project with a typecheck or lint that runs in
+  seconds **and passes today** — wiring it onto an already-red check would block every turn from
+  the start.
+
+### Added
 - `guard-shell-edit` hook (`PreToolUse`, Bash; `.sh` + `.ps1`): denies shell writes to source
   files inside the repo — `pathlib.write_text`, `open(…,'w')`, `sed -i`, `tee`, redirections
   into source extensions — and instructs the model to use Edit/Write. Generated and temp paths
