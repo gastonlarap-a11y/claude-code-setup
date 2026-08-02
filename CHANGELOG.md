@@ -9,6 +9,68 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
 
 ## [Unreleased]
 
+### Added
+- `guard-shell-edit` hook (`PreToolUse`, Bash; `.sh` + `.ps1`): denies shell writes to source
+  files inside the repo — `pathlib.write_text`, `open(…,'w')`, `sed -i`, `tee`, redirections
+  into source extensions — and instructs the model to use Edit/Write. Generated and temp paths
+  (`dist`, `build`, `bin`, `obj`, `node_modules`, `$TMPDIR`, `/tmp`) pass; fail-open.
+  Motivated by a measured session where 229 of 932 Bash commands rewrote whole React/C# files
+  through Python heredocs instead of Edit, against only 245 Edit calls.
+- `scripts/check-context-budget.sh` + `validate.yml` step: hard ceiling on always-loaded
+  instructions (`global/CLAUDE.md` ≤ 45 lines, warn at 40; each `global/rules/*.md` ≤ 40).
+  Deterministic guard against Context Bloat, the smell found in 42% of real repos.
+- `post-merge-cleanup` skill: the merge-verification + prune + fresh-branch procedure extracted
+  out of the always-loaded `global/CLAUDE.md`.
+- `references/confidence-rubric.md` for `setup-project`: how to score the `Confianza: NN%` line
+  the global instructions now require, with per-cause deductions and calibration floors.
+- `harness` skill + `show.sh`: a catalogue of everything the configuration provides — skills and
+  what each is for, guards, per-language rules, plugins, and what carries over to other agents.
+  Generated from the installed files rather than hand-written, so it cannot go stale; takes an
+  optional term to filter. Runs standalone in any terminal, which is also how a local LLM or a
+  non-Claude agent consumes it.
+- `hooks/lib/agent-io.sh`: shared hook I/O so one guard script serves three CLIs. Claude Code
+  and Codex share a contract field for field; Antigravity reads `.toolCall.args.CommandLine` and
+  answers `{"decision": …}`. The dialect lives in this one file.
+- `install.sh` registers the guards for Codex (`~/.codex/hooks.json`) and Antigravity
+  (`~/.gemini/config/hooks.json`) — only when those config dirs already exist, merging with `jq`
+  so hooks from other tools survive, and idempotent across re-runs.
+- `github-new-repo` skill, rescued from `~/.claude/skills/` where it lived unversioned.
+
+### Fixed
+- Gemini CLI retired on 2026-06-18; its successor Antigravity CLI reads `AGENTS.md` natively and
+  uses `.agents/skills/`. `setup-project` no longer offers or generates the `.gemini/settings.json`
+  bridge (a legacy `GEMINI.md`/`.gemini/` found in a repo is still merged and left alone), and the
+  other-agent question now asks about Codex and Antigravity.
+
+### Changed
+- `global/CLAUDE.md`: 44 → 36 lines while gaining three rules — tool-for-the-job (Read/Grep/Edit
+  vs Bash), the scope contract for tasks touching 3+ files, and the confidence line. Removed
+  what a deterministic mechanism already guarantees: the `git push`/force-push and secrets
+  prose (covered by `guard-git-push.sh`, `guard-git-add-all.sh` and `permissions.deny`), the
+  skill-routing bullets (covered by each skill's `description`), and the post-merge procedure
+  (now a skill).
+- `global/settings.json`: `Read`, `Edit`, `Write` and `MultiEdit` added to `permissions.allow`.
+  Bash had 50 pre-approved entries and the editing tools none, which made the shell the cheapest
+  path and produced the rewrite-by-heredoc pattern above. The `deny` list keeps precedence, so
+  `.env*`, `secrets.env`, `.git/**`, lockfiles and keys stay protected.
+- `format-on-edit` (`.sh` + `.ps1`): stop probing `dotnet csharpier` when it is not installed —
+  it cost ~0.1 s per `.cs` edit and always failed on repos that format via `.editorconfig` +
+  analyzers with `EnforceCodeStyleInBuild`.
+- `setup-project` templates: the `new-<unit>` skeleton now settles the contract first, fans the
+  independent branches out in parallel for units touching 6+ files, and keeps magnet files
+  (DI registration, i18n dictionary, shared types, route tables) on the main thread.
+- `install.ps1` wires the new hook to its PowerShell port on Windows without Git Bash.
+- **Nothing is enabled globally any more**: the four official LSP plugins moved to `false` in
+  `global/settings.json`, joining the 13 stack plugins. A language server loaded in a project of
+  another language is pure context cost. Every plugin, LSP included, is enabled per project in
+  its `.claude/settings.json`; `setup-project` maps stack → plugins and states this explicitly.
+  The rule is now written down in `global/CLAUDE.md`, where it did not exist. `install.sh`
+  re-applies the `enabledPlugins` block after installing, because `claude plugin install` turns
+  a plugin on unless its manifest sets `defaultEnabled: false` — which the official LSP and
+  expo plugins do not, so they silently came back on after every install.
+- `global/settings.json` `model` → `opus[1m]`, matching what the machine actually runs, so a
+  re-install stops reverting it.
+
 ## [1.0.0] - 2026-07-24
 
 ### Added

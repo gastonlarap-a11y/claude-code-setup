@@ -54,10 +54,13 @@ case "$file" in
     command -v ktlint >/dev/null 2>&1 && ktlint -F "$file" >/dev/null 2>&1 || true
     ;;
   *.cs)
+    # csharpier only when actually installed. Probing `dotnet csharpier` blindly costs
+    # ~0.1s per edit and always fails on repos that format via .editorconfig + analyzers
+    # with EnforceCodeStyleInBuild — the common .NET setup, where there is nothing to run.
     if command -v csharpier >/dev/null 2>&1; then
       csharpier format "$file" >/dev/null 2>&1 || true
-    elif command -v dotnet >/dev/null 2>&1; then
-      dotnet csharpier format "$file" >/dev/null 2>&1 || true
+    elif [ -x "$HOME/.dotnet/tools/dotnet-csharpier" ]; then
+      "$HOME/.dotnet/tools/dotnet-csharpier" format "$file" >/dev/null 2>&1 || true
     fi
     ;;
 esac
