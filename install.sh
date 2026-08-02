@@ -151,6 +151,45 @@ open(p, 'w').write(json.dumps(d, indent=2, ensure_ascii=False) + '\n')"
   fi
 fi
 
+# --- Guards for the other agent CLIs ------------------------------------------
+# The guard scripts speak three dialects (see global/hooks/lib/agent-io.sh), so the SAME
+# file serves Claude Code, Codex CLI and Antigravity CLI. Only the registration differs.
+# Registers ONLY into config dirs that already exist — never creates config for a CLI the
+# user does not have — and MERGES with jq so hooks from other tools survive.
+register_agent_guards() {
+  local target="$1" matcher="$2" label="$3" tmp
+  [ -f "$target" ] || printf '{}\n' > "$target"
+  # Temp file next to the target, not in $TMPDIR: same filesystem (atomic mv) and the
+  # directory is writable by definition, since we just wrote the target there.
+  tmp="$target.tmp.$$"
+  if jq --arg hooks_dir "$DEST/hooks" --arg matcher "$matcher" '
+        # Drop any previous entries of ours, then re-add — keeps this idempotent and
+        # leaves every foreign hook untouched.
+        (.hooks.PreToolUse // []) as $existing
+        | .hooks.PreToolUse = (
+            [ $existing[] | select(
+                [ (.hooks // [])[] | .command ] | any(test("guard-(shell-edit|git-push|git-add-all)")) | not
+              ) ]
+            + [ { matcher: $matcher,
+                  hooks: [ "guard-shell-edit", "guard-git-push", "guard-git-add-all" ]
+                         | map({ type: "command", command: ("bash \"" + $hooks_dir + "/" + . + ".sh\"") }) } ]
+          )
+      ' "$target" > "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+    mv "$tmp" "$target"
+    echo "  guards registered for $label ($target)"
+  else
+    rm -f "$tmp"
+    echo "  NOTE: could not register guards for $label — left $target untouched."
+  fi
+}
+
+if command -v jq >/dev/null 2>&1; then
+  # Codex CLI: same hook contract as Claude Code, tool name "Bash".
+  [ -d "$HOME/.codex" ] && register_agent_guards "$HOME/.codex/hooks.json" "Bash" "Codex CLI"
+  # Antigravity CLI (agy): its shell tool is "run_command"; the scripts detect the dialect.
+  [ -d "$HOME/.gemini/config" ] && register_agent_guards "$HOME/.gemini/config/hooks.json" "run_command" "Antigravity CLI"
+fi
+
 # --- Secrets -------------------------------------------------------------------
 # secrets.env is sourced here and injected directly into the MCP registration
 # below (~/.claude.json, machine-local, never committed). Note: a user-level
@@ -236,10 +275,25 @@ print(json.dumps(s))")"
       || echo "  plugin skipped (already installed?): $plugin"
   done < "$SRC/plugins.txt"
 
-  # Stack/domain plugins install disabled: defaultEnabled:false in the manifests
-  # (honored since CLI 2.1.154 — below our documented floor of 2.1.187) plus explicit false entries
-  # in global/settings.json enabledPlugins. Projects re-enable their own.
-  echo "  stack plugins installed globally, disabled by default (enable per project)"
+  # `claude plugin install` turns a plugin ON unless its manifest sets defaultEnabled:false.
+  # The dev-plugins manifests do; the official ones (LSPs, expo) do NOT, so installing them
+  # silently re-enables what global/settings.json just set to false. Re-apply the repo's
+  # enabledPlugins block afterwards so the "nothing is enabled globally" policy holds: a
+  # language server loaded in a project of another language is pure context cost, and every
+  # plugin — LSPs included — is enabled per project in its own .claude/settings.json.
+  if command -v jq >/dev/null 2>&1; then
+    dest_settings="$DEST/settings.json"
+    tmp_settings="$dest_settings.tmp.$$"
+    if jq --slurpfile src "$SRC/global/settings.json" \
+         '.enabledPlugins = ($src[0].enabledPlugins // {})' \
+         "$dest_settings" > "$tmp_settings" 2>/dev/null && [ -s "$tmp_settings" ]; then
+      mv "$tmp_settings" "$dest_settings"
+    else
+      rm -f "$tmp_settings"
+      echo "  WARNING: could not re-apply enabledPlugins — check '$dest_settings' by hand."
+    fi
+  fi
+  echo "  plugins installed globally, all disabled (each project enables what its stack needs)"
 else
   echo "  WARNING: 'claude' CLI not found. Install Claude Code first (native installer, auto-updates):"
   echo "    curl -fsSL https://claude.ai/install.sh | bash"

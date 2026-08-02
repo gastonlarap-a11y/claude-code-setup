@@ -50,7 +50,11 @@
       "Bash(claude plugin list:*)",
       "Bash(claude plugin marketplace list:*)",
       "Bash(claude mcp list:*)",
-      "Bash(wc -l:*)"
+      "Bash(wc -l:*)",
+      "Read",
+      "Edit",
+      "Write",
+      "MultiEdit"
     ],
     "deny": [
       "Bash(rm -rf:*)",
@@ -79,7 +83,7 @@
       "Bash(*DROP TABLE*:*)"
     ]
   },
-  "model": "fable",
+  "model": "opus[1m]",
   "fallbackModel": ["claude-opus-5", "claude-sonnet-5"],
   "language": "spanish",
   "env": {
@@ -139,6 +143,10 @@
             "type": "command",
             "if": "Bash(git *)",
             "command": "bash \"$HOME/.claude/hooks/guard-git-add-all.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/guard-shell-edit.sh\""
           }
         ]
       }
@@ -167,10 +175,10 @@
     ]
   },
   "enabledPlugins": {
-    "typescript-lsp@claude-plugins-official": true,
-    "gopls-lsp@claude-plugins-official": true,
-    "kotlin-lsp@claude-plugins-official": true,
-    "csharp-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": false,
+    "gopls-lsp@claude-plugins-official": false,
+    "kotlin-lsp@claude-plugins-official": false,
+    "csharp-lsp@claude-plugins-official": false,
     "expo@claude-plugins-official": false,
     "nestjs@dev-plugins": false,
     "go@dev-plugins": false,
