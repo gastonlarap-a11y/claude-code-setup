@@ -27,9 +27,12 @@ deny() {
   hook_deny "Blocked by policy (global CLAUDE.md): never push directly to main/master. Push from a feature branch; if this push is really intended, the user must run it themselves in a terminal."
 }
 
-# Analyze the segment after the last `git push` up to any command separator.
+# Analyze the segment after the last `git push`, up to the first command separator OR the
+# end of that line. `head -n1` is not cosmetic: sed cuts per line, so without it a
+# multi-line command bled into the next line and any later `main` (e.g. `gh pr create
+# --base main`) was read as a refspec and denied.
 segment="${cmd##*git push}"
-segment="$(printf '%s' "$segment" | sed 's/[;&|].*$//')"
+segment="$(printf '%s' "$segment" | head -n1 | sed 's/[;&|].*$//')"
 set -f  # no globbing while tokenizing: the command may contain * or ?
 
 # Tokens that are not flags: first is the remote, the rest are refspecs.

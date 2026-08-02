@@ -20,6 +20,7 @@ function Deny {
 
 # Analyze the segment after the last `git add` up to any command separator.
 $segment = $cmd.Substring($cmd.LastIndexOf('git add') + 'git add'.Length)
+$segment = ($segment -split "`r?`n")[0]      # stop at the end of this line first
 $segment = ($segment -split '[;&|]')[0]
 
 foreach ($tok in ($segment -split '\s+')) {
