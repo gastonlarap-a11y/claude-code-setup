@@ -14,6 +14,9 @@ Run from the repo root. Report each real result; a single failure means the work
    `bash scripts/check-versions.sh && bash scripts/check-language-anchors.sh && bash scripts/check-subagent-model.sh && bash scripts/check-templates.sh && bash scripts/check-context-budget.sh`
    On a feature branch also: `bash scripts/check-plugin-version-bump.sh origin/main`.
 3. Shell lint: `shellcheck install.sh scripts/*.sh global/hooks/*.sh global/hooks/lib/*.sh global/skills/*/*.sh global/statusline.sh`
+   Local green does NOT guarantee CI green: `ubuntu-latest` ships a different shellcheck than
+   the Mac's, and it flags checks the newer one dropped (SC2015 on `A && B || C` is the one
+   that has bitten). Prefer explicit `if`/`then` over `A && B || C` so both versions agree.
 4. PowerShell lint: needs `pwsh` (not installed on the Mac — CI's PSScriptAnalyzer step in
    `validate.yml` covers it; on Windows run `Invoke-ScriptAnalyzer` as that step does,
    excluding `PSAvoidUsingWriteHost`, plus `PSAvoidUsingEmptyCatchBlock` for hooks/statusline).

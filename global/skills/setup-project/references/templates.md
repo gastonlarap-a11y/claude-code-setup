@@ -211,6 +211,50 @@ not banned (deploys, pushes, migrations); drop the block if the user prefers no 
 }
 ```
 
+### End-of-turn gate (offer for every project with a cheap check)
+
+The one sensor that checks the WORK rather than the config: it runs the project's own fast
+checks when the turn is about to close and refuses to let it end if one fails, handing the
+failure back while the context is still alive. Without it, "run lint/typecheck before
+declaring done" is prose the model has to remember.
+
+`~/.claude/hooks/verify-turn.sh` is generic; each project passes ITS verified commands:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 180,
+            "command": "bash \"$HOME/.claude/hooks/verify-turn.sh\" '<verified typecheck cmd>' '<verified lint cmd>'"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Rules for choosing the commands:
+
+- **Only cheap ones** — typecheck and lint, seconds not minutes. Full suites and builds stay in
+  CI and in the `verify` skill; a gate that costs minutes trains the user to disable it.
+- **Only commands that are green today.** Run each one first: wiring a gate onto an already-red
+  check blocks every turn from the start. If the project is red, say so and offer the gate for
+  after it is fixed.
+- **Only the areas the agent edits.** A .NET + web repo whose UI work dominates gates on the web
+  checks; the backend build stays in CI.
+
+The script already handles the three ways this goes wrong: `stop_hook_active` so a failure
+cannot loop, its own JSON `decision: block` (not exit 1, which is ignored), and a `timeout` so a
+hung check never freezes the session.
+
+Windows caveat: this wiring calls `bash`. On a machine without Git Bash, point the command at
+`verify-turn.ps1` through `powershell.exe -NoProfile -ExecutionPolicy Bypass -File` instead.
+
 The hook command receives the tool-call JSON on stdin — extract `.tool_input.file_path`
 with jq, never guess paths. The `if` filter (permission-rule syntax) keeps the hook from
 spawning on every edit — scope it to the files the tool actually handles.
