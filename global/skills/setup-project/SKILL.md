@@ -93,8 +93,9 @@ keep / tighten / move / add / retire — retire is always shown to the user, nev
   & co. → merge their still-true content into the shared files; leave the originals alone
   (`/init` with `CLAUDE_CODE_NEW_INIT=1` also reads AGENTS.md/Windsurf/Cline/Devin rules
   natively — this protocol supersedes it, but mention it for quick bootstraps).
-  `GEMINI.md` present → same merge into the shared file, and offer the
-  `.gemini/settings.json` bridge (templates § Other-agent bridges) so Gemini reads it.
+  `GEMINI.md` present → same merge into the shared file; it is legacy (Gemini CLI retired
+  2026-06-18) and its successor Antigravity CLI reads `AGENTS.md` natively, so leave the
+  file alone and generate no `.gemini/` bridge.
 - **Coverage gaps**: missing test/lint/build commands, no architecture map, routine commands
   not pre-approved in permissions, secrets not deny-listed, generated/vendored dirs not
   read-blocked.
@@ -150,9 +151,8 @@ before writing — never from memory; `references/templates.md` is the starting 
 the authority.
 
 Canonical file: with no existing instruction file, generate `AGENTS.md` (the cross-agent
-standard — Codex and Cursor read it natively; Gemini CLI reads it only via its one-line
-`context.fileName` bridge, skeleton in templates § Other-agent bridges) plus the thin
-`CLAUDE.md` that imports
+standard, stewarded by the Linux Foundation — Codex, Cursor and Antigravity read it
+natively) plus the thin `CLAUDE.md` that imports
 it. A project that already has CLAUDE.md-only keeps CLAUDE.md canonical (full content, as
 before) — offer the AGENTS.md split as optional in step 4, never forced. `AGENTS.md` already
 present → the step-2 rule applies (import + deltas).
@@ -194,6 +194,10 @@ default to English unless the user chooses otherwise ("Ask before proposing"). R
 When verified commands are scattered (CI-only, docs-only, raw multi-flag invocations) or
 missing standard names, propose consolidating them into the runner (step-4 approval):
 reuse existing names, add missing ones, never rename ones that work.
+
+Nothing is enabled in the user's global settings — deliberately, not by omission: a plugin
+loaded where it does not apply is pure context cost. Every plugin a project needs, including
+the language's LSP, is enabled in that project's own `.claude/settings.json`.
 
 Plugin mapping when `dev-plugins` is registered: NestJS → `nestjs` + `api-design` ·
 Go service → `go` · Android → `android-kotlin` · Next.js → `react-nextjs` · Flutter →
@@ -256,12 +260,12 @@ new-project interview already settled:
 - Deploy procedure in the roadmap but not built yet → create the deploy skill now marked
   "pending validation", or defer until it exists.
 - ALWAYS ask: which other agent CLIs does the team use for this project — Codex CLI,
-  Gemini CLI, or none? Signs in the repo (`.codex/`, `.gemini/`, `GEMINI.md`,
-  `.agents/`) only pre-fill the suggested answer. Per selection, generate the bridges
-  from templates § Other-agent bridges: Codex → `.agents/skills` symlink +
-  `.codex/config.toml` (+ `.codex/hooks.json` only when mirroring a guarantee generated
-  for Claude Code in this same session); Gemini → `.gemini/settings.json` (+ the shared
-  `.agents/skills` symlink). Never generate without the explicit choice.
+  Antigravity CLI, or none? Signs in the repo (`.codex/`, `.agents/`) only pre-fill the
+  suggested answer. Per selection, generate the bridges from templates § Other-agent
+  bridges: both get the `.agents/skills` symlink (their shared standard location); Codex
+  also gets `.codex/config.toml` (+ `.codex/hooks.json` only when mirroring a guarantee
+  generated for Claude Code in this same session). Antigravity needs nothing beyond the
+  symlink — it reads `AGENTS.md` natively. Never generate without the explicit choice.
 - GitHub remote and no `github` MCP server registered → offer the official GitHub MCP
   (tool search defers schemas, so its idle context cost is near zero).
 - Browser-testable UI (Next.js / React Native / Flutter web) →
@@ -274,7 +278,9 @@ new-project interview already settled:
 
 Present one compact plan: per file — create / keep / tighten / move / retire, each with a
 one-line reason, plus before/after line counts of always-loaded content (that difference is
-the per-session token cost). Include the architecture-principle selection as its own list:
+the per-session token cost). Score the closing `Confianza:` line with
+`references/confidence-rubric.md` — read it here, since a config proposal always mixes
+executed commands with inferred conventions. Include the architecture-principle selection as its own list:
 adopted / proposed / discarded, one-line reason each — the user edits this selection before
 anything is written. Get approval; adjust if redirected. Then write exactly what was
 approved.
@@ -292,7 +298,7 @@ approved.
   AGENTS.md + unscoped rules) before vs after.
 - `.gitignore` covers `CLAUDE.local.md`, `.claude/settings.local.json` and secret files.
 - Bridges, if generated: the `.agents/skills` symlink resolves, and
-  `.gemini/settings.json` / `.codex/config.toml` / `.codex/hooks.json` parse cleanly.
+  `.codex/config.toml` / `.codex/hooks.json` parse cleanly.
 - `/doctor` reports no configuration issues for the project.
 - Tell the user to open a fresh session and check `/context` (real cost) and that routine
   commands no longer prompt for permission; after a few days, `/usage` shows which skills,

@@ -2,7 +2,7 @@
 
 Portable Claude Code configuration, the `dev-plugins` marketplace, and a protocol that
 configures AI coding agents in any project (Claude Code natively; Codex/Cursor read the
-generated `AGENTS.md` directly, Gemini CLI via a one-line bridge). Agent entry points:
+generated `AGENTS.md` directly, and so does Antigravity CLI). Agent entry points:
 
 - **Not sure / any machine, any user**: `START.md` — interactive bootstrap that detects
   the environment, interviews the user, and routes to the right procedure below.
