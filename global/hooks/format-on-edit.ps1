@@ -54,8 +54,12 @@ switch -Regex ($file) {
         break
     }
     '\.cs$' {
+        # csharpier only when actually installed. Probing `dotnet csharpier` blindly costs
+        # ~0.1s per edit and always fails on repos that format via .editorconfig + analyzers
+        # with EnforceCodeStyleInBuild - the common .NET setup, where there is nothing to run.
+        $tool = Join-Path $HOME '.dotnet\tools\dotnet-csharpier.exe'
         if (Get-Command csharpier -ErrorAction SilentlyContinue) { & csharpier format $file 2>$null | Out-Null }
-        elseif (Get-Command dotnet -ErrorAction SilentlyContinue) { & dotnet csharpier format $file 2>$null | Out-Null }
+        elseif (Test-Path $tool) { & $tool format $file 2>$null | Out-Null }
         break
     }
 }

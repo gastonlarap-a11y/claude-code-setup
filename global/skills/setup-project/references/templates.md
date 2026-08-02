@@ -260,10 +260,22 @@ argument-hint: "<unit-name>"
 
 # New <unit>
 
-1. Create `<path>/<name>/` mirroring `<best existing exemplar dir>`: <the files every unit has>.
-2. <register/mount step — exact file and code shape, e.g. wire it in the entry point>
-3. <test conventions: runner, file naming, the repo's assertion style>
-4. Run <lint> + <typecheck> + <test> and report real results.
+1. Fix the contract first: <the signature/schema every other file depends on>. Everything
+   below is derived from it, so it must be settled before anything is written.
+2. Create `<path>/<name>/` mirroring `<best existing exemplar dir>`: <the files every unit has>.
+3. <register/mount step — exact file and code shape, e.g. wire it in the entry point>
+4. <test conventions: runner, file naming, the repo's assertion style>
+5. Run <lint> + <typecheck> + <test> and report real results.
+
+## Fan-out (units touching 6+ files)
+
+After step 1, dispatch the independent branches in parallel — one subagent each, given the
+contract verbatim: <branch A: e.g. backend files> · <branch B: tests> · <branch C: UI/client>
+· <branch D: docs>. Below 6 files, do it inline: the coordination overhead is not worth it.
+
+**Magnet files stay with the main thread.** <list the files every unit appends to — DI
+registration, i18n dictionary, shared type/barrel file, route table>. Parallel branches would
+collide there, so they return their entries and the main thread applies them in one pass.
 ```
 
 ### verify — prove a change works end-to-end
@@ -331,15 +343,18 @@ trivially installable → skip, with a one-line reason in the proposal.
 Generated only for the agents the user selected in the step-3 batched question (asked
 on every run; repo signs only pre-fill the suggested answer) — never by default.
 Harness-dependent details (paths, enums, event names) are verified via
-the `research` skill before writing: Codex ships near-daily and Gemini's successor
-(Antigravity CLI) may move things.
+the `research` skill before writing: Codex ships near-daily and Antigravity CLI is young.
 
-### Shared skills directory (Codex + Gemini)
+Gemini CLI stopped serving individual accounts on 2026-06-18; its successor, Antigravity
+CLI (`agy`), reads `AGENTS.md` natively and uses `.agents/skills/`. So there is no Gemini
+bridge to generate any more — a legacy `.gemini/settings.json` or `GEMINI.md` found in a
+repo is merged like any other pre-existing config and left in place, never recreated.
 
-Codex CLI and Gemini CLI read project skills from `.agents/skills/` (Gemini also from
-`.gemini/skills/`; within the same tier the `.agents/skills` alias wins). Claude Code
-reads `.claude/skills/` — bridge with a relative symlink, keeping `.claude/skills/`
-canonical:
+### Shared skills directory (Codex + Antigravity)
+
+Both read project skills from `.agents/skills/`, which is also Antigravity's documented
+default. Claude Code reads `.claude/skills/` — bridge with a relative symlink, keeping
+`.claude/skills/` canonical so there is one copy of every skill:
 
 ```bash
 ln -s .claude/skills .agents/skills   # from the repo root; commit the symlink
@@ -347,19 +362,6 @@ ln -s .claude/skills .agents/skills   # from the repo root; commit the symlink
 
 Windows teams: symlinks need admin rights or Developer Mode — document the command as a
 manual step in the README instead of creating it (same caveat as `ln -s AGENTS.md CLAUDE.md`).
-
-### .gemini/settings.json — make Gemini read AGENTS.md
-
-The entire Gemini bridge (Gemini CLI does not read `AGENTS.md` by default). Append
-`"GEMINI.md"` to the array only if the project already has one:
-
-```json
-{
-  "context": {
-    "fileName": ["AGENTS.md"]
-  }
-}
-```
 
 ### .codex/config.toml — project-scope Codex defaults
 

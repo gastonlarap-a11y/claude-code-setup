@@ -31,7 +31,7 @@ jobs:
         run: bash scripts/check-plugin-version-bump.sh origin/main
 
       - name: shellcheck
-        run: shellcheck install.sh scripts/*.sh global/hooks/*.sh global/statusline.sh
+        run: shellcheck install.sh scripts/*.sh global/hooks/*.sh global/hooks/lib/*.sh global/skills/*/*.sh global/statusline.sh
 
       - name: Language anchors (single source consumed by installers + CI)
         run: bash scripts/check-language-anchors.sh
@@ -41,6 +41,9 @@ jobs:
 
       - name: Template skeletons are valid config (setup-project references)
         run: bash scripts/check-templates.sh
+
+      - name: Context budget (always-loaded instructions)
+        run: bash scripts/check-context-budget.sh
 
       # v3 (v2 is deprecated: Node 20 leaves GitHub runners Sept 2026). On push events it
       # scans only the pushed commit range — the fetch-depth: 0 checkout above lets that

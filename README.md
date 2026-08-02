@@ -31,11 +31,11 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | Ruta | Qué es | Para qué me sirve |
 |---|---|---|
 | `global/CLAUDE.md` | Instrucciones globales → `~/.claude/CLAUDE.md` | Reglas siempre activas: español/inglés, nunca asumir, investigar proactivamente, VCS por CLI (gh / az devops), autoría limpia |
-| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS + allowlist de red estricta), ~50 permisos pre-aprobados, deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH, `.git/` y lockfiles), hooks, statusline, env (modelo de subagentes: Sonnet), qué plugins están activos |
+| `global/settings.json` | Settings → `~/.claude/settings.json` | Modelo + `fallbackModel`, idioma, `attribution` vacía (autoría limpia determinista), sandbox nativo (protege `~/.ssh`/`~/.aws` a nivel OS + allowlist de red estricta), ~54 permisos pre-aprobados (incluidos `Read`/`Edit`/`Write`/`MultiEdit`, para que editar no salga más caro que abrir una shell), deny-list (rm -rf, force push, `.env*`, secretos, llaves SSH, `.git/` y lockfiles), hooks, statusline, env (modelo de subagentes: Sonnet), qué plugins están activos |
 | `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart/java/csharp: cargan SOLO al tocar archivos de ese lenguaje |
-| `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-git-push.sh` (bloquea push directo a main/master), `guard-git-add-all.sh` (bloquea staging masivo `-A`/`.`), `audit-config-change.sh` (auditoría de cambios de settings/skills → `~/.claude/config-audit.log`), `notify-os.sh` (notificaciones del SO, **opt-in** — snippet abajo). Todos con puerto PowerShell nativo (`.ps1`) que `install.ps1` cablea cuando no hay bash |
+| `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-shell-edit.sh` (bloquea reescribir archivos fuente vía shell: heredocs de python, `sed -i`, redirecciones — obliga a usar Edit/Write, que manda un diff en vez del archivo entero), `guard-git-push.sh` (bloquea push directo a main/master), `guard-git-add-all.sh` (bloquea staging masivo `-A`/`.`), `audit-config-change.sh` (auditoría de cambios de settings/skills → `~/.claude/config-audit.log`), `notify-os.sh` (notificaciones del SO, **opt-in** — snippet abajo). Los tres guards comparten `hooks/lib/agent-io.sh`, que detecta el dialecto del agente, así que el mismo script sirve a Claude Code, Codex y Antigravity (`install.sh` los registra en los tres). Todos con puerto PowerShell nativo (`.ps1`) que `install.ps1` cablea cuando no hay bash |
 | `global/statusline.sh` / `.ps1` | Statusline → `~/.claude/` | Barra con % de contexto usado y % del límite 5h (la variante bash necesita `jq`; el puerto PowerShell no) |
-| `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) |
+| `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) + **`harness`** (catálogo de todo lo invocable, vía `/harness`), **`post-merge-cleanup`** (limpieza verificada tras un merge) y **`github-new-repo`** (publicar un repo con protección estándar) |
 | `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (sonnet): investiga docs en contexto aislado |
 | `global/mcp-servers.json` | Definición MCP (data-driven) | Hoy vacío por decisión (sin servicios freemium): cualquier server que se añada aquí lo registran los installers a nivel usuario, resolviendo sus keys desde `secrets.env` |
 | `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 12 plugins con `defaultEnabled: false` |
@@ -54,15 +54,20 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 
 El diseño sigue la regla oficial de costo de contexto:
 
-1. **Siempre cargado (barato)**: `CLAUDE.md` (~35 líneas) + descripciones de skills de plugins habilitados. Nada más.
+1. **Siempre cargado (barato)**: `CLAUDE.md` (~37 líneas, con techo verificado en CI) + descripciones de skills de plugins habilitados. Nada más.
 2. **Carga al tocar archivos**: `rules/` por lenguaje (`paths:`).
 3. **Carga al usarse**: cuerpo de cada skill; sus `references/*.md` solo si el tema lo pide.
 4. **Cero costo hasta invocar**: skills manuales (`/research`, `/refresh-knowledge`, `/nestjs:new-module`).
 5. **Contexto aislado**: la investigación corre en el subagente `docs-researcher` — tu conversación no se ensucia con páginas de docs.
 6. **Costo cero**: hooks (formateo, filtrado de tests) y guardrails de permisos.
 
-Por eso los plugins van **deshabilitados por defecto**: una sesión de Go jamás paga las
-skills de Flutter. Cada proyecto habilita lo suyo (siguiente sección).
+Por eso **nada se habilita globalmente** — tampoco los LSP: una sesión de Go jamás paga las
+skills de Flutter ni el language server de C#. Los 17 plugins se instalan apagados y cada
+proyecto enciende los suyos en su `.claude/settings.json` (siguiente sección); `/setup-project`
+hace ese mapeo. Detalle del instalador: `claude plugin install` enciende un plugin salvo que su
+manifiesto declare `defaultEnabled: false` — los oficiales (LSP, expo) no lo hacen, así que
+`install.sh` re-aplica el bloque `enabledPlugins` al terminar. Sin ese paso, los LSP volverían
+a encenderse solos en cada instalación.
 
 > **Modelo de subagentes:** `global/settings.json` fija `env.CLAUDE_CODE_SUBAGENT_MODEL: sonnet`
 > — todos los subagentes (Explore/Plan/`docs-researcher`/…) corren en Sonnet heredando
@@ -80,7 +85,8 @@ viven en las secciones "Paso a paso" enlazadas.
 
 | Comando | Qué hace | Cuándo usarlo |
 |---|---|---|
-| `/setup-project [foco]` | Protocolo completo: descubre el stack real, audita config existente, propone y genera `AGENTS.md`+`CLAUDE.md`, `.claude/` (rules/skills/settings), README, plugins, puentes multi-agente (Codex/Gemini) y ofertas MCP — nada se escribe sin aprobar | Proyecto sin config de IA, config con drift (un comando documentado falla, una convención contradice el código), o re-auditoría tras cambios estructurales (`/setup-project audit`) |
+| `/harness [término]` | Muestra TODO lo que da esta config: cada skill y para qué sirve, los guards que corren solos, las rules por tipo de archivo, los plugins y qué se traslada a otros agentes. Se genera leyendo los archivos instalados, así que no puede quedar desactualizado. Con un término, filtra y muestra la descripción completa | Cuando no recuerdes qué tienes disponible o qué hace una pieza concreta. Fuera de cualquier agente: `bash ~/.claude/skills/harness/show.sh` |
+| `/setup-project [foco]` | Protocolo completo: descubre el stack real, audita config existente, propone y genera `AGENTS.md`+`CLAUDE.md`, `.claude/` (rules/skills/settings), README, plugins, puentes multi-agente (Codex/Antigravity) y ofertas MCP — nada se escribe sin aprobar | Proyecto sin config de IA, config con drift (un comando documentado falla, una convención contradice el código), o re-auditoría tras cambios estructurales (`/setup-project audit`) |
 | `/refresh-knowledge [alcance]` | Re-verifica el conocimiento curado (recipes/references + claims de versión del propio repo) contra docs oficiales, actualiza, sube versiones (dual-bump), republica y reporta coste de tokens (`plugin details`) | ~1 vez al mes, o cuando `research` marque drift; alcance opcional: un plugin o skill concreto |
 | `/research <pregunta>` | Investiga la forma oficial ACTUAL de hacer algo (docs oficiales en la web) aislado en el subagente `docs-researcher`; vuelve con versión + snippet + fuente | Cualquier duda de API/versión de terceros — también se dispara sola por la regla global "research proactively" |
 | `/azure-deploy` | Deploy de aplicaciones en contenedor a Azure Container Apps vía Azure CLI | Solo bajo orden explícita (side-effectful; nunca se auto-invoca) |
@@ -94,6 +100,8 @@ viven en las secciones "Paso a paso" enlazadas.
 | `databases` | diseñas esquemas, escribes migraciones o eliges datastore |
 | `docker-kubernetes` | escribes o revisas Dockerfiles, compose o manifests de K8s |
 | `research` | aparece superficie de terceros no cubierta por un skill ya cargado |
+| `post-merge-cleanup` | confirmas que un PR se mergeó, o una rama local queda `[gone]`: verifica el merge de verdad antes de borrar nada, poda y arranca desde un `main` fresco |
+| `github-new-repo` | publicas un repo local en GitHub: escaneo previo de secretos, email noreply, y el ruleset de protección de `main` |
 
 **Skills de plugins** (requieren el plugin habilitado en el proyecto — ver mapeo más abajo):
 `/nestjs:new-module` es el único manual (scaffolding de módulo NestJS). El resto de los
@@ -118,6 +126,7 @@ activo, `recipes` en los móviles, `auth`/`design`/`webhooks` (api-design), `pat
 | `check-language-anchors.sh` | las anclas de idioma que reescriben los installers siguen en las fuentes |
 | `check-subagent-model.sh` | frontmatter de `global/agents/` vs `CLAUDE_CODE_SUBAGENT_MODEL` |
 | `check-templates.sh` | los esqueletos JSON/TOML de `setup-project` siguen siendo config válida |
+| `check-context-budget.sh` | el techo de lo siempre-cargado: `global/CLAUDE.md` ≤ 45 líneas (aviso a 40) y cada `rules/*.md` ≤ 40 |
 | `installer-smoke.sh` / `.ps1` | ejecución real de los installers: instalación fresca, idioma, poda, dry-run, ruta de fallo (y wiring `.ps1` en Windows) |
 
 **Flujo de plugins** (resumen — [paso a paso](#editar-y-publicar-un-plugin)):
@@ -182,7 +191,7 @@ Un solo comando para los tres casos — abre Claude Code en el repo y corre:
 
 | Caso | Qué hace el protocolo |
 |---|---|
-| **Proyecto nuevo** (recién inicializado) | Entrevista guiada paso a paso (propósito → stack → arquitectura → deploy/CI → testing), habilita los plugins que correspondan y genera `AGENTS.md` canónico (lo leen nativo Codex/Cursor; Gemini CLI vía su ajuste `context.fileName`) + `CLAUDE.md` delgado (`@AGENTS.md`) + `.claude/` mínimos que fijan la arquitectura desde la primera sesión |
+| **Proyecto nuevo** (recién inicializado) | Entrevista guiada paso a paso (propósito → stack → arquitectura → deploy/CI → testing), habilita los plugins que correspondan y genera `AGENTS.md` canónico (lo leen nativo Codex, Cursor y Antigravity) + `CLAUDE.md` delgado (`@AGENTS.md`) + `.claude/` mínimos que fijan la arquitectura desde la primera sesión |
 | **Proyecto existente sin config de IA** | Deriva las convenciones DEL código real (módulos recientes, comandos verificados corriéndolos, CI) y las codifica en config token-lean adaptada a ese repo — nunca impone estilo ajeno |
 | **Proyecto con config de IA previa** (CLAUDE.md, AGENTS.md, .cursorrules, .claude/…) | Audita: mantiene lo que sirve, afina lo impreciso, mueve lo mal ubicado (procedimientos → skills, estilo por lenguaje → rules con `paths:`, garantías → permisos/hooks) y muestra TODO cambio antes de aplicarlo — jamás descarta en silencio |
 
@@ -244,11 +253,14 @@ config personal (idioma, autoría, statusline). `AGENT-PROJECT-SETUP.md` lo advi
 agentes no deben sugerirlo a terceros. Las preferencias personales de cada quien van en su
 propio `~/.claude/CLAUDE.md`, nunca en los archivos compartidos del proyecto.
 
-### Editar este repo con otros agentes (Codex / Gemini CLI)
+### Editar este repo con otros agentes (Codex / Antigravity CLI)
 
-El repo trae sus propios bridges: Codex lee `AGENTS.md` nativo (+ `.codex/config.toml`
-al hacer `codex trust`), Gemini lo lee vía `.gemini/settings.json`, y ambos toman las
-skills del symlink `.agents/skills → .claude/skills`. En Windows los symlinks de git
+`AGENTS.md` es el estándar cross-agent (Linux Foundation) y lo leen nativo tanto Codex
+(+ `.codex/config.toml` al hacer `codex trust`) como Antigravity CLI — Claude Code lo toma
+vía el `CLAUDE.md` delgado que lo importa. Los tres leen las skills del symlink
+`.agents/skills → .claude/skills`, que es también la ubicación por defecto de Antigravity.
+Gemini CLI dejó de servir cuentas individuales el 2026-06-18 y su sucesor no necesita el
+antiguo bridge `.gemini/settings.json`. En Windows los symlinks de git
 requieren Developer Mode (o admin); si el checkout lo dejó como archivo de texto,
 recrearlo: `cmd /c mklink /D .agents\skills ..\.claude\skills` desde la raíz del repo.
 
@@ -338,8 +350,8 @@ mantiene esta lista al día:
   comenta el PR, `ultra` = revisión multi-agente en la nube.
 - **Observabilidad**: `/usage` (consumo por skill/subagente/plugin/MCP), `/doctor` (diagnóstico de
   config), `/cd` (cambiar de directorio sin perder caché), `--safe-mode` (arrancar sin customizaciones).
-- **Modelos**: familia Claude 5 — Fable 5 (alias `fable`, tier Mythos, el modelo primario en
-  `global/settings.json`), Opus 5 (`claude-opus-5`, default de Claude Code desde 2.1.219;
+- **Modelos**: familia Claude 5 — Opus 5 con contexto de 1M (`opus[1m]`, el modelo primario en
+  `global/settings.json`), Fable 5 (alias `fable`, tier Mythos), Opus 5 (`claude-opus-5`, default de Claude Code desde 2.1.219;
   `claude-opus-4-8` queda como linaje Bedrock/Vertex) y Sonnet 5 (contexto 1M). `/effort xhigh`,
   fast mode 2x costo / 2.5x velocidad. `fallbackModel` (hasta 3 en cadena) ya configurado aquí:
   `claude-opus-5` → `claude-sonnet-5`.
@@ -357,16 +369,22 @@ mantiene esta lista al día:
 ```bash
 claude mcp list                      # sin servers globales (mcp-servers.json hoy vacío)
 claude plugin marketplace list      # dev-plugins
-claude plugin list                   # 4 LSP enabled; 12 stack/dominio + expo disabled
+claude plugin list                   # los 17 instalados y TODOS disabled (se habilitan por proyecto)
 ```
 
 En una sesión nueva: statusline visible con % de contexto · `/context` sin skills de stack
 (en un dir neutro) · leer un `.go` carga `rules/go.md` · pedir leer `.env` → denegado ·
-`/research <pregunta>` responde con versión + fuente · `/setup-project` aparece en el
-menú `/` · `/sandbox` muestra la config resuelta (macOS/Linux/WSL2) · pedir `git push`
+`/research <pregunta>` responde con versión + fuente · `/setup-project` y `/harness` aparecen
+en el menú `/` · `/sandbox` muestra la config resuelta (macOS/Linux/WSL2) · pedir `git push`
 estando en `main` → denegado por `guard-git-push.sh` · pedir `git add -A` → denegado por
-`guard-git-add-all.sh` · editar `~/.claude/settings.json` desde fuera durante una sesión →
-línea nueva en `~/.claude/config-audit.log`.
+`guard-git-add-all.sh` · pedir escribir un `.ts` con un heredoc de `python3` o un `sed -i` →
+denegado por `guard-shell-edit.sh` (el mismo comando apuntando a `$TMPDIR` o `dist/` pasa) ·
+editar `~/.claude/settings.json` desde fuera durante una sesión → línea nueva en
+`~/.claude/config-audit.log`.
+
+`/harness` es el atajo para ver todo lo anterior sin memorizarlo: lista cada skill con para
+qué sirve, los guards activos, las rules por tipo de archivo y los plugins. Se genera leyendo
+los archivos instalados, así que si algo no aparece ahí, no está instalado.
 
 > Nota: la config por proyecto (`.claude/` y `CLAUDE.md` de cada repo) NO vive aquí —
 > viaja en el git de cada repositorio. Este repo aporta el protocolo que la genera y

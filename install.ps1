@@ -124,7 +124,7 @@ if ($UsePsHooks) {
     $WiringPath = Join-Path $Dest 'settings.json'
     $WiringText = [IO.File]::ReadAllText($WiringPath)
     $HooksFwd = ((Join-Path $Dest 'hooks') -replace '\\', '/')
-    foreach ($hook in 'filter-test-output', 'guard-git-push', 'guard-git-add-all', 'format-on-edit', 'audit-config-change') {
+    foreach ($hook in 'filter-test-output', 'guard-git-push', 'guard-git-add-all', 'guard-shell-edit', 'format-on-edit', 'audit-config-change') {
         $old = 'bash \"$HOME/.claude/hooks/' + $hook + '.sh\"'
         $new = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"' + $HooksFwd + '/' + $hook + '.ps1\"'
         $WiringText = $WiringText.Replace($old, $new)

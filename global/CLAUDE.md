@@ -18,27 +18,20 @@ Senior polyglot developer. Main stacks: NestJS (TypeScript/Fastify), Go, Android
 ## Workflow rules
 - **Never assume**: if a request is ambiguous, incomplete, or contradictory, ask targeted questions before acting.
 - **Counter-propose**: if what I asked is incorrect, suboptimal, or a more efficient route exists, say so with the why BEFORE acting, and let me choose between my version and yours; once I pick, execute without re-litigating.
-- Research proactively without being asked: for any third-party API surface, version, or "how do I X" not fully covered by a loaded skill, use the `research` skill (official docs on the web) and fetch only the relevant section — never whole docs, never training-data guesses.
-- Research and doc lookups: always in English, preferring the latest stable release and official sources (docs, changelogs, release notes). Never assume versions from memory.
+- Research proactively without being asked: for any third-party API surface, version, or "how do I X" not fully covered by a loaded skill, use the `research` skill — official sources in English, latest stable, only the relevant section. Never a version or signature from memory.
 - VCS via CLI: use `gh` for GitHub remotes and `az repos` / `az devops` for Azure DevOps remotes (detect from `git remote -v`). If the required CLI is missing, install it or give me the exact install steps and pause until I confirm.
-- Prefer editing existing files over creating new ones. No README/docs files unless asked —
-  exception: creating or setting up a project always includes creating/updating its README
-  (setup-project protocol).
-- For Docker/Kubernetes, CI/CD, database, or architecture-decision tasks, consult the matching global skill (`docker-kubernetes`, `ci-cd`, `databases`, `architecture`).
-- If the project has no `CLAUDE.md`/`.claude/` config, or its config has drifted (a documented command fails, a stated convention contradicts the code), offer `/setup-project` — it creates/audits/improves project config without discarding what exists.
+- Prefer editing existing files over creating new ones. No README/docs files unless asked — except when creating or setting up a project, which always includes its README (setup-project protocol).
+- **Tools have jobs**: read with Read, search with Grep/Glob, change with Edit/Write. Bash runs things — never use it to read, write or patch repo files: a shell heredoc re-serializes a whole file where an Edit would have sent a diff.
+- **Nothing is enabled globally**: no plugin or LSP is on by default. Each repo turns on what its own stack needs in its `.claude/settings.json` — `setup-project` maps stack → plugins. A plugin loaded where it does not apply is pure context cost.
+- **Scope contract**: before the first edit of a task touching 3+ files, state in ≤5 lines which files you will touch (grouped by area), what is out of scope, and your confidence line; wait for the go-ahead. Skip for single-file or already-scoped fixes.
+- **Confidence**: close every plan, "work is done" report, research answer and config proposal with `Confianza: NN% — <what stayed unverified>`. Never a bare number: name an unverified assumption, or claim none only when everything really ran. Below 70%, say human review is needed before merging.
 
 ## Git conventions
 - **Authorship rule (absolute): commits, PRs, MRs, issues and their descriptions carry ONLY my identity — no `Co-Authored-By` trailers, no "Generated with" footers, no AI attribution of any kind, anywhere.**
 - **Publish only on explicit order**: never commit, push, or open PRs/MRs on your own initiative — on any platform (GitHub via `gh`, Azure DevOps via `az repos`, or other). Only when I explicitly ask ("sube los cambios" or equivalent); then run the full flow (commit → push → PR/MR) with the CLI detected from `git remote -v`.
 - Conventional Commits style: `feat|fix|refactor|test|chore(scope): message`.
-- Never commit secrets; `.env*` and `secrets*` files stay out of git.
-- Never push directly to `main`; never `git push --force` unless I explicitly ask.
-- **Post-merge cleanup (automatic)**: remotes auto-delete branches on PR merge. When I confirm
-  a merge or a local branch shows `[gone]` upstream, first verify with
-  `gh pr view <branch> --json state` (or `az repos pr show`) that state is MERGED, then clean
-  up without asking: `git checkout main && git pull && git fetch --prune`, delete the local
-  branch (`git branch -D` — safe only because the merge was verified), and start the next work
-  from a fresh branch off main.
+- After a merge is confirmed, or a local branch shows `[gone]` upstream → `post-merge-cleanup`
+  skill (verifies the merge, then prunes and branches off a fresh main).
 
 # Compact instructions
 When compacting, preserve: the list of modified files, the exact build/test commands used and their latest results, key architectural decisions made this session, and any unresolved errors or pending steps.

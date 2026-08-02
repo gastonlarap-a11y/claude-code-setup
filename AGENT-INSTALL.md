@@ -54,7 +54,8 @@ This does, idempotently:
 1. Backs up the exact items it is about to replace into `~/.claude/.backup-<timestamp>/`
    (last 3 backups kept — see "Rollback & uninstall" below).
 2. Copies `global/CLAUDE.md`, `global/settings.json`, `global/skills/`, `global/agents/`,
-   `global/hooks/`, `global/rules/`, `global/statusline.sh` and `global/statusline.ps1`
+   `global/hooks/` (including `hooks/lib/`, the shared dialect helper), `global/rules/`,
+   `global/statusline.sh` and `global/statusline.ps1`
    into `~/.claude/` and marks scripts executable. On Windows without bash, the
    hook/statusline wiring in the installed `settings.json` is rewritten to the native
    `.ps1` ports.
@@ -62,7 +63,11 @@ This does, idempotently:
    no longer in the repo are removed (manifest-listed paths only — user files survive).
 4. Applies `CLAUDE_LANGUAGE` (if set or persisted) to the copied `settings.json` and
    `CLAUDE.md` — see "Response language" above.
-5. Sources `secrets.env` (if present) and resolves, data-driven, every env var declared
+5. Registers the guards for the other agent CLIs — `~/.codex/hooks.json` (Codex shares
+   Claude Code's hook contract) and `~/.gemini/config/hooks.json` (Antigravity CLI, whose
+   dialect the same scripts detect). Only into config dirs that already exist, merged with
+   `jq` so hooks from other tools survive, and idempotent across re-runs.
+6. Sources `secrets.env` (if present) and resolves, data-driven, every env var declared
    by the servers in `global/mcp-servers.json` (currently empty — no servers, no keys)
    directly into their user-scope MCP registrations (`~/.claude.json` — machine-local,
    never committed). Missing keys just drop: the server registers keyless and `/doctor`
@@ -70,14 +75,17 @@ This does, idempotently:
    installer changes.
    Note: a user-level `settings.local.json` env block is NOT read by Claude Code — the
    `${VAR}` placeholders in MCP configs expand from the process environment only.
-6. (Re-)registers each server (`claude mcp remove` + `add-json`), so key/config updates
+7. (Re-)registers each server (`claude mcp remove` + `add-json`), so key/config updates
    take effect on re-runs.
-7. Registers this repo as the `dev-plugins` marketplace
+8. Registers this repo as the `dev-plugins` marketplace
    (`claude plugin marketplace add <this repo>`).
-8. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 7 stack
-   plugins + the 5 domain plugins: api-design, bots, realtime, background-jobs, ux).
-   Stack/domain plugins install disabled (`defaultEnabled: false` in the manifests +
-   explicit `false` entries in `global/settings.json`); LSP plugins stay globally enabled.
+9. Installs the plugins listed in `plugins.txt` (official LSPs + expo + the 7 stack
+   plugins + the 5 domain plugins: api-design, bots, realtime, background-jobs, ux) and
+   then re-applies the `enabledPlugins` block from `global/settings.json`, leaving **all
+   17 installed and disabled**. Nothing is enabled globally: a language server loaded in a
+   project of another language is pure context cost. The re-apply is not redundant —
+   `claude plugin install` turns a plugin on unless its manifest sets
+   `defaultEnabled: false`, which the official LSP and expo plugins do not.
 
 If `install.sh` fails at any step, perform that step manually (the script is short — read it).
 
@@ -85,10 +93,11 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
 - `claude mcp list` shows exactly the servers declared in `global/mcp-servers.json`
   (none today — an empty list is the expected result).
 - `claude plugin marketplace list` shows `dev-plugins`.
-- `claude plugin list` shows the 4 LSP plugins **enabled**, and `expo` + the 12 personal
-  plugins (`nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`,
-  `dotnet`, `api-design`, `bots`, `realtime`, `background-jobs`, `ux`) **installed but
-  disabled**.
+- `claude plugin list` shows all 17 plugins — the 4 LSPs, `expo` and the 12 personal ones
+  (`nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`, `dotnet`,
+  `api-design`, `bots`, `realtime`, `background-jobs`, `ux`) — **installed but disabled**.
+  Each project enables what its stack needs in its own `.claude/settings.json`;
+  `/setup-project` does that mapping.
 - `/research <question>` works in a session (runs in the `docs-researcher` subagent and
   returns version + snippet + source).
 - `/setup-project` is listed in the `/` menu (global skill that creates/audits per-project
@@ -105,6 +114,11 @@ If `install.sh` fails at any step, perform that step manually (the script is sho
   on a feature branch it goes through.
 - Asking for `git add -A` (any repo) must be denied by `guard-git-add-all.sh`; staging
   specific paths goes through.
+- Asking to write a source file through the shell (a `python3 -c` heredoc, `sed -i`, or a
+  redirection into a `.ts`/`.cs`) must be denied by `guard-shell-edit.sh`, which tells the
+  model to use Edit/Write instead; the same command aimed at `$TMPDIR` or `dist/` passes.
+- `/harness` lists every skill, guard, rule and plugin — the catalogue is generated from the
+  installed files, so it doubles as a check that the install landed.
 - Editing `~/.claude/settings.json` from OUTSIDE the session while one runs must append a
   line to `~/.claude/config-audit.log` (ConfigChange audit hook).
 

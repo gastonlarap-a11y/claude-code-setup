@@ -1,7 +1,7 @@
 # AGENT-PROJECT-SETUP — Configure any project using this directory
 
 You are an AI agent configuring a TARGET project (new or existing, any stack, any owner)
-for Claude Code — and, opt-in, with bridges for other agent CLIs (Codex, Gemini) — using
+for Claude Code — and, opt-in, with bridges for other agent CLIs (Codex, Antigravity) — using
 this directory as your toolbox. If the user has not said which
 project, ask. (Reached via `START.md`? The interview already settled who the user is and
 which project — don't re-ask.)
