@@ -7,27 +7,20 @@
 # prose rule + the secrets deny list still apply.
 set -uo pipefail
 
-input="$(cat)"
-PY="$(command -v python3 || command -v python || command -v py || true)"
-if command -v jq >/dev/null 2>&1; then
-  cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null || true)"
-elif [ -n "$PY" ]; then
-  cmd="$(printf '%s' "$input" | "$PY" -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('command',''))" 2>/dev/null || true)"
-else
-  echo '{}'
-  exit 0
-fi
+# shellcheck source=lib/agent-io.sh disable=SC1091
+. "$(dirname "${BASH_SOURCE[0]}")/lib/agent-io.sh" 2>/dev/null || { echo '{}'; exit 0; }
+
+hook_read_command
+cmd="${HOOK_CMD:-}"
+[ -n "$cmd" ] || hook_allow
 
 case "$cmd" in
   *"git add"*) ;;
-  *) echo '{}'; exit 0 ;;
+  *) hook_allow ;;
 esac
 
 deny() {
-  cat <<'JSON'
-{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Blocked by policy: bulk staging (git add -A/--all/./:/) can sweep secrets or runtime files into the commit unseen. Stage the intended paths by name (git add <file> ...); if bulk staging is really intended, the user must run it themselves in a terminal."}}
-JSON
-  exit 0
+  hook_deny "Blocked by policy: bulk staging (git add -A/--all/./:/) can sweep secrets or runtime files into the commit unseen. Stage the intended paths by name (git add <file> ...); if bulk staging is really intended, the user must run it themselves in a terminal."
 }
 
 # Analyze the segment after the last `git add` up to any command separator.
@@ -41,4 +34,4 @@ for tok in $segment; do
   esac
 done
 
-echo '{}'
+hook_allow

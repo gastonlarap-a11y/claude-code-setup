@@ -6,29 +6,25 @@
 # prose rule + permission deny list (force push) still apply.
 set -uo pipefail
 
-input="$(cat)"
-PY="$(command -v python3 || command -v python || command -v py || true)"
+# shellcheck source=lib/agent-io.sh disable=SC1091
+. "$(dirname "${BASH_SOURCE[0]}")/lib/agent-io.sh" 2>/dev/null || { echo '{}'; exit 0; }
+
+hook_read_command
+cmd="${HOOK_CMD:-}"
+[ -n "$cmd" ] || hook_allow
+
+cwd=""
 if command -v jq >/dev/null 2>&1; then
-  cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null || true)"
-  cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null || true)"
-elif [ -n "$PY" ]; then
-  cmd="$(printf '%s' "$input" | "$PY" -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('command',''))" 2>/dev/null || true)"
-  cwd="$(printf '%s' "$input" | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('cwd',''))" 2>/dev/null || true)"
-else
-  echo '{}'
-  exit 0
+  cwd="$(printf '%s' "$HOOK_INPUT" | jq -r '.cwd // .workspaceRoot // empty' 2>/dev/null || true)"
 fi
 
 case "$cmd" in
   *"git push"*) ;;
-  *) echo '{}'; exit 0 ;;
+  *) hook_allow ;;
 esac
 
 deny() {
-  cat <<'JSON'
-{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Blocked by policy (global CLAUDE.md): never push directly to main/master. Push from a feature branch; if this push is really intended, the user must run it themselves in a terminal."}}
-JSON
-  exit 0
+  hook_deny "Blocked by policy (global CLAUDE.md): never push directly to main/master. Push from a feature branch; if this push is really intended, the user must run it themselves in a terminal."
 }
 
 # Analyze the segment after the last `git push` up to any command separator.
@@ -73,4 +69,4 @@ if [ "$need_branch_check" -eq 1 ] && [ -n "$cwd" ]; then
   esac
 fi
 
-echo '{}'
+hook_allow
