@@ -35,12 +35,12 @@ con config existente que se preserva y afina) dejándolo auto-mejorable.
 | `global/rules/` | Reglas por lenguaje (`paths:`) → `~/.claude/rules/` | ts/go/kotlin/dart/java/csharp: cargan SOLO al tocar archivos de ese lenguaje |
 | `global/hooks/` | Hooks → `~/.claude/hooks/` | `format-on-edit.sh` (autoformato), `filter-test-output.sh`+`run-test-filtered.sh` (solo fallos de tests al contexto — gran ahorro), `guard-shell-edit.sh` (bloquea reescribir archivos fuente vía shell: heredocs de python, `sed -i`, redirecciones — obliga a usar Edit/Write, que manda un diff en vez del archivo entero), `guard-git-push.sh` (bloquea push directo a main/master), `guard-git-add-all.sh` (bloquea staging masivo `-A`/`.`), `audit-config-change.sh` (auditoría de cambios de settings/skills → `~/.claude/config-audit.log`), `notify-os.sh` (notificaciones del SO, **opt-in** — snippet abajo). Los tres guards comparten `hooks/lib/agent-io.sh`, que detecta el dialecto del agente, así que el mismo script sirve a Claude Code, Codex y Antigravity (`install.sh` los registra en los tres). Todos con puerto PowerShell nativo (`.ps1`) que `install.ps1` cablea cuando no hay bash |
 | `global/statusline.sh` / `.ps1` | Statusline → `~/.claude/` | Barra con % de contexto usado y % del límite 5h (la variante bash necesita `jq`; el puerto PowerShell no) |
-| `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd`, `databases`, `docker-kubernetes` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) + **`harness`** (catálogo de todo lo invocable, vía `/harness`), **`post-merge-cleanup`** (limpieza verificada tras un merge) y **`github-new-repo`** (publicar un repo con protección estándar) |
+| `global/skills/` | Skills globales → `~/.claude/skills/` | Cross-stack: `architecture`, `ci-cd` + **`research`** (auto-investigación), **`refresh-knowledge`** (automejora del recetario) y **`setup-project`** (configura/audita/mejora la config de cualquier proyecto) + **`azure-deploy`** (deploy a Azure Container Apps vía `/azure-deploy`) + **`harness`** (catálogo de todo lo invocable, vía `/harness`), **`post-merge-cleanup`** (limpieza verificada tras un merge) y **`github-new-repo`** (publicar un repo con protección estándar) |
 | `global/agents/` | Subagentes → `~/.claude/agents/` | `docs-researcher` (sonnet): investiga docs en contexto aislado |
 | `global/mcp-servers.json` | Definición MCP (data-driven) | Hoy vacío por decisión (sin servicios freemium): cualquier server que se añada aquí lo registran los installers a nivel usuario, resolviendo sus keys desde `secrets.env` |
-| `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 12 plugins con `defaultEnabled: false` |
+| `.claude-plugin/marketplace.json` | Manifiesto del marketplace | Declara los 14 plugins con `defaultEnabled: false` |
 | `plugins/` (stack) | `nestjs`, `go`, `android-kotlin`, `react-nextjs`, `flutter`, `react-native`, `dotnet` | Convenciones de arquitectura/testing/tooling por stack; flutter trae MCP oficial de Dart + LSP de Dart; los móviles traen `recipes`; dotnet trae EF Core + SQL Server local (OrbStack), Aspire, Azure y ruta de aprendizaje |
-| `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil) — con `references/` que cargan solo si hacen falta |
+| `plugins/` (dominio) | `api-design`, `bots`, `realtime`, `background-jobs`, `ux`, `databases`, `docker-kubernetes` | Conocimiento por tipo de desarrollo: APIs (REST/GraphQL/gRPC/auth/webhooks), bots (Telegram/Discord/WhatsApp), realtime (WS/SSE/push), jobs (colas/outbox/cron), UX (estados de pantalla, accesibilidad, convenciones web/Android/móvil), datastores (esquema/migraciones/ORM), contenedores (Dockerfile/compose/K8s) — con `references/` que cargan solo si hacen falta |
 | `plugins.txt` / `install.sh` / `install.ps1` | Instalador (bash y PowerShell nativo) | Idempotente: respalda lo que va a reemplazar (`~/.claude/.backup-<ts>`, últimos 3), copia config, poda huérfanos vía manifest, aplica `CLAUDE_LANGUAGE`, registra marketplace, instala plugins. `install.ps1` = Windows sin Git Bash |
 | `.github/workflows/*.yml` + `scripts/check-*.sh` | CI del repo | En cada push: JSON lint, paridad de versiones (dual-bump) + sync de `enabledPlugins`, gate de bump olvidado (ramas), shellcheck, anclas de idioma, consistencia de modelo de subagentes, validación de esqueletos de plantillas, escaneo de secretos (gitleaks), lint de PowerShell y `claude plugin validate --strict`; y smoke real de los installers (Linux + Windows PowerShell 5.1) cuando cambian |
 | `secrets.env(.example)` | Keys reales (gitignored) / plantilla | Hoy sin keys; cuando un server MCP declare una, los installers la inyectan directo en el registro a nivel usuario (`~/.claude.json`, jamás commiteado) |
@@ -97,15 +97,13 @@ viven en las secciones "Paso a paso" enlazadas.
 |---|---|
 | `architecture` | eliges estructura o patrones, arrancas/reestructuras un proyecto (su catálogo de principios lo usa `setup-project`) |
 | `ci-cd` | creas o modificas workflows de GitHub Actions, pipelines o deploys |
-| `databases` | diseñas esquemas, escribes migraciones o eliges datastore |
-| `docker-kubernetes` | escribes o revisas Dockerfiles, compose o manifests de K8s |
 | `research` | aparece superficie de terceros no cubierta por un skill ya cargado |
 | `post-merge-cleanup` | confirmas que un PR se mergeó, o una rama local queda `[gone]`: verifica el merge de verdad antes de borrar nada, poda y arranca desde un `main` fresco |
 | `github-new-repo` | publicas un repo local en GitHub: escaneo previo de secretos, email noreply, y el ruleset de protección de `main` |
 
 **Skills de plugins** (requieren el plugin habilitado en el proyecto — ver mapeo más abajo):
 `/nestjs:new-module` es el único manual (scaffolding de módulo NestJS). El resto de los
-12 plugins son skills automáticas por tema: `architecture`/`testing`/`tooling` del stack
+14 plugins son skills automáticas por tema: `architecture`/`testing`/`tooling` del stack
 activo, `recipes` en los móviles, `auth`/`design`/`webhooks` (api-design), `patterns`
 (realtime/background-jobs), `ux`.
 
@@ -228,6 +226,8 @@ Mapeo de plugins que aplica el protocolo (referencia, por si lo haces a mano):
 | App React Native | `react-native` + `expo@claude-plugins-official` + `ux` |
 | API/Servicio .NET (C#) | `dotnet` + `api-design` (+ `background-jobs` si hay colas) |
 | Bot (cualquier stack) | stack + `bots` (+ `background-jobs`) |
+| Cualquiera con datastore propio (esquema/migraciones/ORM) | + `databases` |
+| Cualquiera con `Dockerfile`, compose o manifests K8s | + `docker-kubernetes` |
 | Stack sin plugin (Python, Rust, …) | rules/skills locales generados por el protocolo (auto-suficientes) |
 
 Manual: `.claude/settings.json` con `{ "enabledPlugins": { "nestjs@dev-plugins": true } }`

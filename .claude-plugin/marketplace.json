@@ -97,6 +97,22 @@
       "version": "1.0.2",
       "defaultEnabled": false,
       "category": "domain"
+    },
+    {
+      "name": "databases",
+      "source": "./plugins/databases",
+      "description": "Schema and naming conventions, migrations, indexing, SQL vs NoSQL choice and per-ORM patterns",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "domain"
+    },
+    {
+      "name": "docker-kubernetes",
+      "source": "./plugins/docker-kubernetes",
+      "description": "Dockerfile, docker-compose and Kubernetes manifest conventions across the supported stacks",
+      "version": "1.0.0",
+      "defaultEnabled": false,
+      "category": "domain"
     }
   ],
   "owner": {

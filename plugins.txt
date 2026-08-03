@@ -1,4 +1,4 @@
-# LSP plugins (globally enabled via global/settings.json)
+# LSP plugins (installed, enabled per project — nothing is enabled globally)
 typescript-lsp@claude-plugins-official
 gopls-lsp@claude-plugins-official
 kotlin-lsp@claude-plugins-official
@@ -19,3 +19,5 @@ bots@dev-plugins
 realtime@dev-plugins
 background-jobs@dev-plugins
 ux@dev-plugins
+databases@dev-plugins
+docker-kubernetes@dev-plugins

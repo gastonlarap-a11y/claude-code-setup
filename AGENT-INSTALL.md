@@ -160,6 +160,21 @@ teammate's machine): follow `AGENT-PROJECT-SETUP.md` instead of this file.
   (reviews Claude's changes for vulnerabilities as it works).
 - Per-project config: each repo under `~/Documents/Git/` carries its own `CLAUDE.md` +
   `.claude/` in git; nothing to restore from here.
+- Codex CLI is NOT installed by this repo — `install.sh` only registers `~/.codex/hooks.json`
+  (step 5). If the user installs it, point subagents at a cheaper tier in the **global**
+  `~/.codex/config.toml` (model keys are global-only; `.codex/config.toml` in a project is
+  for `sandbox_mode` / `approval_policy` and must not carry them):
+
+  ```toml
+  [agents]
+  default_subagent_model = "gpt-5.6-terra"       # exploration, read-heavy scans
+  default_subagent_reasoning_effort = "medium"
+  ```
+
+  Per agent, `model` + `model_reasoning_effort` in its own TOML win over the `[agents]`
+  defaults. Left unset, Codex picks per task, balancing intelligence/speed/price.
+  Re-check the model names against the current Codex docs before writing them — the
+  `gpt-5.x` line rotates fast.
 
 ## Rollback & uninstall
 

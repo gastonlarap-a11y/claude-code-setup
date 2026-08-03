@@ -36,6 +36,10 @@ Everything in English. `<angle brackets>` mark what to replace.
 - Ambiguous request → ask targeted questions first. Requested approach wrong or beatable → say why and let the requester choose before proceeding.
 ```
 
+This block stays even when the user's `~/.claude/CLAUDE.md` already says the same: `AGENTS.md`
+is the cross-agent canonical file, and Codex, Antigravity and Cursor never load Claude's global
+memory. Removing it as "redundant" silently downgrades every agent except Claude.
+
 ## Root CLAUDE.md — thin shim (fresh configs)
 
 ```markdown
@@ -229,7 +233,7 @@ declaring done" is prose the model has to remember.
           {
             "type": "command",
             "timeout": 180,
-            "command": "bash \"$HOME/.claude/hooks/verify-turn.sh\" '<verified typecheck cmd>' '<verified lint cmd>'"
+            "command": "bash \"$HOME/.claude/hooks/verify-turn.sh\" '<globs>::<verified typecheck cmd>' '<globs>::<verified lint cmd>'"
           }
         ]
       }
@@ -238,6 +242,19 @@ declaring done" is prose the model has to remember.
 }
 ```
 
+`<globs>::` scopes a command to the area it verifies, so a mixed-stack repo does not pay the
+web checks on a turn that only touched the backend:
+
+```
+'renderer/**::pnpm -C renderer typecheck'    'src/**,*.slnx::dotnet build'
+```
+
+Comma-separates several globs. They match `git status --porcelain`, so they are relative to
+the **repo root**, and `*` crosses `/` (shell `case` semantics — `renderer/*` already covers
+`renderer/src/a.ts`). Drop the prefix for a check that must run on every turn; a prefix
+containing whitespace is treated as part of the command, so `--filter A::B` keeps working.
+A clean working tree skips the scoped commands; when git cannot answer at all, everything runs.
+
 Rules for choosing the commands:
 
 - **Only cheap ones** — typecheck and lint, seconds not minutes. Full suites and builds stay in
@@ -245,8 +262,9 @@ Rules for choosing the commands:
 - **Only commands that are green today.** Run each one first: wiring a gate onto an already-red
   check blocks every turn from the start. If the project is red, say so and offer the gate for
   after it is fixed.
-- **Only the areas the agent edits.** A .NET + web repo whose UI work dominates gates on the web
-  checks; the backend build stays in CI.
+- **Scope every command that is not repo-wide.** A .NET + web repo gates the web checks behind
+  `renderer/**::` and the backend behind `src/**::`; a turn that touched neither pays nothing.
+  Verify the globs against `git status --porcelain` output, not against the on-disk tree.
 
 The script already handles the three ways this goes wrong: `stop_hook_active` so a failure
 cannot loop, its own JSON `decision: block` (not exit 1, which is ignored), and a `timeout` so a

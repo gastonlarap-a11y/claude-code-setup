@@ -1,0 +1,10 @@
+{
+  "name": "docker-kubernetes",
+  "displayName": "Docker & Kubernetes",
+  "version": "1.0.0",
+  "description": "Dockerfile, docker-compose and Kubernetes manifest conventions across the supported stacks",
+  "defaultEnabled": false,
+  "author": {
+    "name": "dev-plugins"
+  }
+}

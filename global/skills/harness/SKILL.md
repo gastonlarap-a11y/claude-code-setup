@@ -1,6 +1,6 @@
 ---
 name: harness
-description: Show what this agent configuration actually gives you — every skill and what it is for, which guards run silently, which rules load per file type, which plugins are on, and what carries over to Codex and Antigravity. Use when the user asks what they can do, what commands exist, what a particular skill or guard is for, or how to use this setup.
+description: Show what this agent configuration actually gives you — every skill, the guards that run silently, the rules loaded per file type, the plugins on, and what carries over to Codex and Antigravity. Use when the user asks what they can do, what commands exist, or what a piece of the setup is for.
 argument-hint: "[term to look up, e.g. setup or guard]"
 ---
 

@@ -1,0 +1,10 @@
+{
+  "name": "databases",
+  "displayName": "Databases",
+  "version": "1.0.0",
+  "description": "Schema and naming conventions, migrations, indexing, SQL vs NoSQL choice and per-ORM patterns",
+  "defaultEnabled": false,
+  "author": {
+    "name": "dev-plugins"
+  }
+}

@@ -27,6 +27,30 @@ else
   echo "check-context-budget: global/CLAUDE.md OK ($lines/$CLAUDE_MD_FAIL lines)"
 fi
 
+# Every global skill puts its name and `description` in the system prompt of EVERY session of
+# EVERY project, whether or not the skill is ever opened — the only always-on cost a skill has.
+# There is no per-skill disable in the CLI, so the lever is: stay global and stay short, or move
+# to a plugin the project enables. This ceiling is what makes that choice deliberate.
+SKILL_DESC_WARN=2800
+SKILL_DESC_FAIL=3200
+
+desc_chars=0
+for skill in "$root"/global/skills/*/SKILL.md; do
+  [ -e "$skill" ] || continue
+  n="$(grep -m1 '^description:' "$skill" | wc -c | tr -d ' ')"
+  desc_chars=$((desc_chars + n))
+done
+if [ "$desc_chars" -gt "$SKILL_DESC_FAIL" ]; then
+  echo "check-context-budget: global skill descriptions total $desc_chars chars (max $SKILL_DESC_FAIL)." >&2
+  echo "  Every project pays this on every session. Shorten the descriptions to their trigger" >&2
+  echo "  words, or move a stack-specific skill into a plugin enabled per project." >&2
+  status=1
+elif [ "$desc_chars" -gt "$SKILL_DESC_WARN" ]; then
+  echo "check-context-budget: WARNING global skill descriptions total $desc_chars chars (soft limit $SKILL_DESC_WARN)."
+else
+  echo "check-context-budget: global skill descriptions OK ($desc_chars/$SKILL_DESC_FAIL chars)"
+fi
+
 for rule in "$root"/global/rules/*.md; do
   [ -e "$rule" ] || continue
   rl="$(wc -l < "$rule" | tr -d ' ')"

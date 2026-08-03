@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Bash(go build:*)",
       "Bash(go vet:*)",
@@ -87,8 +88,7 @@
   "fallbackModel": ["claude-opus-5", "claude-sonnet-5"],
   "language": "spanish",
   "env": {
-    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-sonnet-5"
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
   },
   "attribution": {
     "commit": "",
@@ -191,7 +191,9 @@
     "bots@dev-plugins": false,
     "realtime@dev-plugins": false,
     "background-jobs@dev-plugins": false,
-    "ux@dev-plugins": false
+    "ux@dev-plugins": false,
+    "databases@dev-plugins": false,
+    "docker-kubernetes@dev-plugins": false
   },
   "effortLevel": "high",
   "theme": "dark"

@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: Decision framework for architecture and design patterns — choosing between vertical slices, layered, hexagonal, or modular monolith; when a design pattern earns its place; scalability and readability criteria; per-project-type principles catalog with applicability signals (used by setup-project). Use when starting a project, restructuring modules, justifying a pattern choice, or selecting which architecture principles apply to a given project.
+description: Decision framework for architecture and design patterns — vertical slices vs layered vs hexagonal vs modular monolith, when a pattern earns its place — plus the per-project-type principles catalog used by setup-project. Use when starting a project, restructuring modules, or justifying a pattern choice.
 ---
 
 # Architecture decision framework

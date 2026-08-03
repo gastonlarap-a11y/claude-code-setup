@@ -9,6 +9,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · dates YYYY-M
 
 ## [Unreleased]
 
+### Changed
+- `verify-turn` (`.sh` + `.ps1`) accepts `<globs>::<command>`: a command now declares the area it
+  verifies and is skipped when the turn did not touch it. The gate was costing 11 s on **every**
+  turn of a mixed .NET + web repo, including turns that edited nothing — a gate that expensive
+  trains you to disable it. The `Stop` payload carries no file list, so the footprint is read off
+  `git status --porcelain -z` (repo-root-relative, `*` crosses `/`). Backwards compatible: an
+  argument with no `::`, or whose prefix contains whitespace (`--filter A::B`), always runs.
+  A clean tree skips the scoped commands; when git cannot answer at all, everything runs.
+- `permissions.defaultMode: "auto"` in `global/settings.json`. It belongs in the repo, not in
+  `~/.claude/settings.json`: the installer copies that file wholesale, so a hand edit there is
+  lost on the next run.
+- `setup-project` no longer treats overlap with the user's `~/.claude/CLAUDE.md` as duplication
+  to retire from `AGENTS.md`. A real audit proposed exactly that; `AGENTS.md` is the cross-agent
+  canonical file and Codex, Antigravity and Cursor never load Claude's global memory.
+- `databases` and `docker-kubernetes` moved from `global/skills/` to plugins (`databases@dev-plugins`,
+  `docker-kubernetes@dev-plugins`, both `defaultEnabled: false`). A global skill puts its name and
+  description in the system prompt of every session of every project even when never opened, and
+  the CLI has no per-skill disable — so a skill that only some projects need belongs in a plugin,
+  exactly as the repo's own "nothing is enabled globally" rule says. With shorter descriptions for
+  `setup-project`, `architecture` and `harness`, the always-on cost drops 910 chars (~227 tokens
+  per session, measured: 3500 → 2590).
+
+### Added
+- `check-context-budget.sh` now caps the combined length of the global skills' `description`
+  fields (warn 2800 / fail 3200 chars). The 3500-char drift that prompted this was only found by
+  a manual audit; the ceiling makes "stay global and stay short, or move to a plugin" a CI answer.
+
 ### Added
 - `verify-turn` hook (`Stop`; `.sh` + `.ps1`): the end-of-turn quality gate. Every other guard
   here checks the config or the command — this one checks the **work**. It runs the project's

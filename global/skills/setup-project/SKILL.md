@@ -1,6 +1,6 @@
 ---
 name: setup-project
-description: Create, audit or improve a project's Claude Code configuration (CLAUDE.md, README, .claude/rules, skills, settings, plugins) adapted to the project's real stack, size and conventions. Use when a project has no CLAUDE.md or .claude/ config, when the user asks to set up, review or improve the AI/agent configuration, or when drift is detected (a documented command fails, a stated convention contradicts the code). Works on new, legacy and already-configured projects; never discards existing instructions.
+description: Create, audit or improve a project's agent configuration — AGENTS.md/CLAUDE.md, README, .claude/ rules, skills, settings, plugins — fitted to its real stack. Use when a project has no AI config, when asked to set up, review or improve it, or when drift shows up (a documented command fails, a convention contradicts the code).
 argument-hint: "[optional focus: audit | a subdirectory | a concern like 'testing']"
 ---
 
@@ -88,6 +88,9 @@ keep / tighten / move / add / retire — retire is always shown to the user, nev
   - reference material → skill `references/*.md`, loaded only when the topic comes up.
 - **Duplication/conflicts**: nothing the code, README or manifests already state; no rule
   repeated across files; no contradictions (Claude resolves them arbitrarily — fix them).
+  Scope of the comparison: files *in the repo*. Overlap with the user's `~/.claude/CLAUDE.md`
+  is never a reason to cut anything from `AGENTS.md` — that file is read by Codex, Antigravity
+  and Cursor, none of which load Claude's global memory.
 - **Other-tool configs**: `AGENTS.md` present → root CLAUDE.md becomes `@AGENTS.md` import
   plus Claude-specific deltas below it (one shared source for all agents). `.cursorrules`
   & co. → merge their still-true content into the shared files; leave the originals alone
@@ -204,8 +207,10 @@ Go service → `go` · Android → `android-kotlin` · Next.js → `react-nextjs
 `flutter` · React Native → `react-native` + `expo@claude-plugins-official` · C#/.NET →
 `dotnet` + `api-design` · add `bots` /
 `realtime` / `background-jobs` per domain · any project with a user-facing UI (web or
-mobile, any framework) → `ux`. The official code-intelligence (LSP) plugin for the
-project's language goes through the compatibility-checked batched question below.
+mobile, any framework) → `ux` · a datastore the repo owns (schema, migrations, ORM) →
+`databases` · `Dockerfile` / compose / K8s manifests in the repo → `docker-kubernetes`.
+The official code-intelligence (LSP) plugin for the project's language goes through the
+compatibility-checked batched question below.
 
 Third-party additions (skills, plugins, MCP servers) follow a two-tier rule:
 official/curated marketplaces install after the compatibility check; community/unvetted
